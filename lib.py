@@ -110,3 +110,92 @@ def backtracking_wolfe(f, grad_f, point, alpha, c1, c2, tau, max_iter=50):
         else:
             break
     return alpha
+
+
+
+def gradient_descent_wolfe(f, grad_f, point, h, tol=1e-6, max_iter=1000, c1=0.1, c2=0.9, tau=0.7):
+    path = [[point[0]], [point[1]]]
+    for i in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        alpha = backtracking_wolfe(f, grad_f, point, h, c1, c2, tau)
+        point -= alpha * grad
+        path[0].append(point[0])
+        path[1].append(point[1])
+    print("Кол-во итераций:", i)
+    return np.array(point), np.array(path)
+
+#############################
+# Часть 2. Одномерный поиск минимума
+#############################
+
+# Здесь предполагается, что функция g(alpha) является одномерной и имеет один минимум на отрезке [a, b].
+
+def golden_section_search(f, a, b, tol=1e-6, max_iter=100):
+    phi = (np.sqrt(5) - 1) / 2  # Золотое сечение ~0.618
+    c = b - (b - a) * phi
+    d = a + (b - a) * phi
+    fc = f(c)
+    fd = f(d)
+    for _ in range(max_iter):
+        if abs(b - a) < tol:
+            break
+        if fc < fd:
+            b = d
+            d = c
+            fd = fc
+            c = b - (b - a) * phi
+            fc = f(c)
+        else:
+            a = c
+            c = d
+            fc = fd
+            d = a + (b - a) * phi
+            fd = f(d)
+    return (a + b) / 2
+
+def bisection_search(f: function, a: int, b: int, tolerance: int, delta=1e-6, max_iter=100):
+    for _ in range(max_iter):
+        if abs(b - a) < tol:
+            break
+        mid = (a + b) / 2
+        c = mid - delta
+        d = mid + delta
+        if f(c) < f(d):
+            b = d
+        else:
+            a = c
+    return (a + b) / 2
+
+def gradient_descent_golden(f, grad_f, point, tol=1e-6, max_iter=100):
+    path = [[point[0]], [point[1]]]
+    for _ in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        direction = -grad
+        def g(alpha): return f(point + alpha * direction)
+        alpha = golden_section_search(g, 0, 1, tol=1e-6)
+        point = point + alpha * direction
+        path[0].append(point[0])
+        path[1].append(point[1])
+    return np.array(point), np.array(path)
+
+def gradient_descent_dichotomy(f: function, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+    tracker.track(point)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point)
+        # Если норма градиента меньше заданной точности, то завершаем поиск
+        if np.linalg.norm(current_gradient) < tolerance:
+            break
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point - alpha * current_gradient)
+        # Поиск шага методом дихотомии
+        h = bisection_search(g, 0, 1, tolerance=1e-6)
+        # Обновляем координаты x_k = x_k-1 - h * grad(f)
+        point -= h * current_gradient
+
+        tracker.track(point)
+    return np.array(point)
