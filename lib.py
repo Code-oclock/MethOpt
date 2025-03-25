@@ -1,0 +1,169 @@
+import numpy as np
+
+global i
+
+def f(point):
+    x, y = point
+    return x**2 + y**2
+
+def grad_f(point):
+    x, y = point
+    return np.array([2 * x, 2 * y])
+
+def g(point):
+    x, y = point
+    return (1 - x)**2 + 100 * (y - x**2) ** 2 # f(x,y) = (a-x)^2 + b(y - x^2)^2 Розенброка
+
+def grad_g(point):
+    x, y = point
+    return np.array([-2 * (1 - x) - 400 * x * (y - x**2), 200 * (y - x**2)])
+
+
+def gradient_descent_fixed(f, grad_f, point, h, tol=1e-3, max_iter=100_000):
+    path = [[point[0]], [point[1]]]
+    for i in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        point -= h * grad
+        path[0].append(point[0])
+        path[1].append(point[1])
+    print("Кол-во итераций:", i)
+    return np.array(point), np.array(path)
+
+def gradient_descent_decreasing(f, grad_f, point, h, tol=1e-3, max_iter=100_000):
+    path = [[point[0]], [point[1]]]
+    for i in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        h = h / (1 + i)
+        point -= h * grad
+        path[0].append(point[0])
+        path[1].append(point[1])
+    print("Кол-во итераций:", i)
+    return np.array(point), np.array(path)
+
+def backtracking_armijo(f, grad_f, point, alpha=1.0, c=np.random.uniform(0, 1), tau=0.7):
+    grad = grad_f(point)
+    # Условие Армихо: f(x - alpha*grad) <= f(x) - c*alpha*(||grad||^2)
+    while f(point - alpha * grad) > f(point) - c * alpha * np.dot(grad, grad):
+        alpha *= tau  # уменьшаем шаг
+    return alpha
+
+def gradient_descent_armijo(f, grad_f, point, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1):
+    path = [[point[0]], [point[1]]]
+    for i in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        alpha = backtracking_armijo(f, grad_f, point, h, np.random.uniform(0, 1), tau)
+        point -= alpha * grad
+        path[0].append(point[0])
+        path[1].append(point[1])
+    print("Кол-во итераций:", i)
+    return np.array(point), np.array(path)
+
+# 1.4 Градиентный спуск с подбором шага по условиям Вульфа
+# Здесь проверяются два условия: условие Армихо и условие кривизны.
+def backtracking_wolfe(f, grad_f, point, alpha, c1, c2, tau, max_iter=50):
+    grad_x = grad_f(point)
+    phi0 = f(point)
+    grad_norm0 = np.dot(grad_x, -grad_x)  # должно быть отрицательным
+    for i in range(max_iter):
+        point -= alpha * grad_x
+        phi = f(point)
+        grad_new = grad_f(point)
+        phi_prime = np.dot(grad_new, -grad_x)
+        # Условие Армихо
+        if phi > phi0 + c1 * alpha * grad_norm0:
+            alpha *= tau
+        # Условие кривизны (Wolfe): phi_prime >= c2 * phi_prime0
+        elif phi_prime < c2 * grad_norm0:
+            alpha *= 1.1  # увеличиваем шаг, если наклон слишком крутой
+        else:
+            break
+    return alpha
+
+def gradient_descent_wolfe(f, grad_f, point, h, tol=1e-6, max_iter=1000, c1=0.1, c2=0.9, tau=0.7):
+    path = [[point[0]], [point[1]]]
+    for i in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        alpha = backtracking_wolfe(f, grad_f, point, h, c1, c2, tau)
+        point -= alpha * grad
+        path[0].append(point[0])
+        path[1].append(point[1])
+    print("Кол-во итераций:", i)
+    return np.array(point), np.array(path)
+
+#############################
+# Часть 2. Одномерный поиск минимума
+#############################
+
+# Здесь предполагается, что функция g(alpha) является одномерной и имеет один минимум на отрезке [a, b].
+
+def golden_section_search(f, a, b, tol=1e-6, max_iter=100):
+    phi = (np.sqrt(5) - 1) / 2  # Золотое сечение ~0.618
+    c = b - (b - a) * phi
+    d = a + (b - a) * phi
+    fc = f(c)
+    fd = f(d)
+    for _ in range(max_iter):
+        if abs(b - a) < tol:
+            break
+        if fc < fd:
+            b = d
+            d = c
+            fd = fc
+            c = b - (b - a) * phi
+            fc = f(c)
+        else:
+            a = c
+            c = d
+            fc = fd
+            d = a + (b - a) * phi
+            fd = f(d)
+    return (a + b) / 2
+
+def bisection_search(f, a, b, tol=1e-6, delta=1e-6, max_iter=100):
+    for _ in range(max_iter):
+        if abs(b - a) < tol:
+            break
+        mid = (a + b) / 2
+        c = mid - delta
+        d = mid + delta
+        if f(c) < f(d):
+            b = d
+        else:
+            a = c
+    return (a + b) / 2
+
+def gradient_descent_golden(f, grad_f, point, tol=1e-6, max_iter=100):
+    path = [[point[0]], [point[1]]]
+    for _ in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        direction = -grad
+        def g(alpha): return f(point + alpha * direction)
+        alpha = golden_section_search(g, 0, 1, tol=1e-6)
+        point = point + alpha * direction
+        path[0].append(point[0])
+        path[1].append(point[1])
+    return np.array(point), np.array(path)
+
+def gradient_descent_dichotomy(f, grad_f, point, tol=1e-6, max_iter=100):
+    path = [[point[0]], [point[1]]]
+    for _ in range(max_iter):
+        grad = grad_f(point)
+        if np.linalg.norm(grad) < tol:
+            break
+        direction = -grad
+        def g(alpha): return f(point + alpha * direction)
+        alpha = bisection_search(g, 0, 1, tol=1e-6)
+        point = point + alpha * direction
+        path[0].append(point[0])
+        path[1].append(point[1])
+    return np.array(point), np.array(path)
