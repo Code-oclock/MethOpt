@@ -42,53 +42,58 @@ class Tracker:
 #----------------------
 
 # Градиентный спуск с константным шагом
-def gradient_descent_fixed(f: function, point: np.array, h: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+def gradient_descent_fixed(f, point: np.array, step: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
     tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
+        if np.linalg.norm(current_gradient) < tolerance: break
+
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
-        point -= h * current_gradient
+        point -= step * current_gradient
         
         tracker.track(point)
     return np.array(point)
 
-def gradient_descent_decreasing(f: function, point: np.array, h: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+# Градиентный спуск с уменьшающимся шагом
+def gradient_descent_decreasing(f, point: np.array, step: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
     tracker.track(point)
 
-    for i in range(max_iterations):
+    for i in range(1, max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
+        if np.linalg.norm(current_gradient) < tolerance: break
+
         # Обновляем координаты x_k = x_k-1 - (h / k) * grad(f)
-        point -= h / (1 + i) * current_gradient
+        point -= step / i * current_gradient
         
         tracker.track(point)
     return np.array(point)
 
+# Стратегия выбора шага Армихо
 def backtracking_armijo(f, grad_f, point, alpha=1.0, c=np.random.uniform(0, 1), tau=0.7):
     grad = grad_f(point)
-    # Условие Армихо: f(x - alpha*grad) <= f(x) - c*alpha*(||grad||^2)
+    # Условие Армихо: 
+    #     f(x - alpha * grad) <= f(x) - c * alpha * (||grad||^2)
     while f(point - alpha * grad) > f(point) - c * alpha * np.dot(grad, grad):
         alpha *= tau  # уменьшаем шаг
     return alpha
 
-def gradient_descent_armijo(f, grad_f, point, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1):
-    path = [[point[0]], [point[1]]]
-    for i in range(max_iter):
-        grad = grad_f(point)
-        if np.linalg.norm(grad) < tol:
-            break
-        alpha = backtracking_armijo(f, grad_f, point, h, np.random.uniform(0, 1), tau)
-        point -= alpha * grad
-        path[0].append(point[0])
-        path[1].append(point[1])
-    print("Кол-во итераций:", i)
-    return np.array(point), np.array(path)
+#def gradient_descent_armijo(f, point: np.array, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1, tracker: Tracker):
+
+# Градиентный спуск со стратегией выбора шага по условию Армихо
+def gradient_descent_armijo(f, point: np.array, step: float, tolerance: float, max_iterations: int, c: float, tau: float, tracker: Tracker) -> np.array:
+    tracker.track(point)
+    for i in range(max_iterations):
+        current_gradient = gradient(f, point)
+        if np.linalg.norm(current_gradient) < tolerance: break
+
+        alpha = backtracking_armijo(f, current_gradient, point, step, np.random.uniform(0, 1), tau)
+        point -= alpha * current_gradient
+        tracker.track(point)
+        
+    return np.array(point)
 
 # 1.4 Градиентный спуск с подбором шага по условиям Вульфа
 # Здесь проверяются два условия: условие Армихо и условие кривизны.
