@@ -170,32 +170,30 @@ def gradient_descent_wolfe(f, point: np.array, step: float, tolerance: float, ma
 # Часть 2. Одномерный поиск минимума
 #############################
 
-# Здесь предполагается, что функция g(alpha) является одномерной и имеет один минимум на отрезке [a, b].
-
-def golden_section_search(f, a, b, tol=1e-6, max_iter=100):
+# Здесь предполагается, что функция f(point) является одномерной и имеет один минимум на отрезке [start, end].
+def golden_section_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
     phi = (np.sqrt(5) - 1) / 2  # Золотое сечение ~0.618
-    c = b - (b - a) * phi
-    d = a + (b - a) * phi
-    fc = f(c)
-    fd = f(d)
-    for _ in range(max_iter):
-        if abs(b - a) < tol:
-            break
-        if fc < fd:
-            b = d
-            d = c
-            fd = fc
-            c = b - (b - a) * phi
-            fc = f(c)
-        else:
-            a = c
-            c = d
-            fc = fd
-            d = a + (b - a) * phi
-            fd = f(d)
-    return (a + b) / 2
+    # Находим две точки c и d, которые делят отрезок [start, end] в пропорции золотого сечения: [start, c, d, end]
+    c = end - (end - start) * phi
+    d = start + (end - start) * phi
 
-def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: int):
+    for _ in range(max_iterations):
+        # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
+        if abs(end - start) < tolerance:
+            break
+        # Если значение функции в точке c меньше, чем в точке d, то сдвигаем правую границу (иначе левую)
+        if f(c) < f(d):
+            end = d # сдвигаем правую границу
+            d = c # сдвигаем правую границу разделения отрзка
+            c = end - (end - start) * phi # новая пропорция (левая граница) разделения отрзка
+        else:
+            start = c # сдвигаем левую границу
+            c = d # сдвигаем правую леву. границу разделения отрзка
+            d = start + (end - start) * phi # новая пропорция (правая граница) разделения отрзка
+    middle = (start + end) / 2
+    return middle
+
+def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
     delta = tolerance
     for _ in range(max_iterations):
         # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
@@ -216,19 +214,23 @@ def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: 
     middle = (start + end) / 2
     return middle
 
-def gradient_descent_golden(f, grad_f, point, tol=1e-6, max_iter=100):
-    path = [[point[0]], [point[1]]]
-    for _ in range(max_iter):
-        grad = grad_f(point)
-        if np.linalg.norm(grad) < tol:
+def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+    tracker.track(point)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point)
+        # Если норма градиента меньше заданной точности, то завершаем поиск
+        if np.linalg.norm(current_gradient) < tolerance:
             break
-        direction = -grad
-        def g(alpha): return f(point + alpha * direction)
-        alpha = golden_section_search(g, 0, 1, tol=1e-6)
-        point = point + alpha * direction
-        path[0].append(point[0])
-        path[1].append(point[1])
-    return np.array(point), np.array(path)
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point - alpha * current_gradient)
+        # Поиск шага методом золотого сечения
+        step = golden_section_search(g, 0, 1, 1e-6, 100)
+        # Обновляем координаты x_k = x_k-1 - h * grad(f)
+        point -= step * current_gradient
+
+        tracker.track(point)
+    return np.array(point)
 
 def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
     tracker.track(point)
@@ -241,9 +243,9 @@ def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterati
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом дихотомии
-        h = bisection_search(g, 0, 1, 1e-6, 100)
+        step = bisection_search(g, 0, 1, 1e-6, 100)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
-        point -= h * current_gradient
+        point -= step * current_gradient
 
         tracker.track(point)
     return np.array(point)
