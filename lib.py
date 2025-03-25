@@ -92,7 +92,7 @@ def backtracking_armijo(
     alpha: float, 
     c: float, 
     tau
-):
+) -> float:
     # Условие Армихо: 
     #     f(x - alpha * grad) <= f(x) - c * alpha * (||grad||^2)
     #
@@ -103,10 +103,8 @@ def backtracking_armijo(
 
     current_gradient = gradient(f, point)
     while f(point - alpha * current_gradient) > f(point) - c * alpha * np.dot(current_gradient, current_gradient):
-        alpha *= tau
+        alpha = alpha * tau
     return alpha
-
-#def gradient_descent_armijo(f, point: np.array, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1, tracker: Tracker):
 
 # Градиентный спуск с выбором шага по условию Армихо
 def gradient_descent_armijo(
@@ -132,35 +130,46 @@ def gradient_descent_armijo(
     return np.array(point)
 
 # Стратегия выбора шага по условию Вульфа
-def backtracking_wolfe(f, grad_f, point, alpha, c1, c2, tau, max_iter=50):
-    grad_x = grad_f(point)
-    phi0 = f(point)
-    grad_norm0 = np.dot(grad_x, -grad_x)  # должно быть отрицательным
-    for i in range(max_iter):
-        point -= alpha * grad_x
-        phi = f(point)
-        grad_new = grad_f(point)
-        phi_prime = np.dot(grad_new, -grad_x)
-        # Условие Армихо
-        if phi > phi0 + c1 * alpha * grad_norm0:
-            alpha *= tau
-        # Условие кривизны (Wolfe): phi_prime >= c2 * phi_prime0
-        elif phi_prime < c2 * grad_norm0:
-            alpha *= 1.1  # увеличиваем шаг, если наклон слишком крутой
-        else:
+def backtracking_wolfe(
+    f, 
+    point: np.array, 
+    alpha: float, 
+    c1: float, 
+    c2: float, 
+    tau: float, 
+    max_iterations: int
+) -> float:
+    current_gradient = gradient(point)
+    for _ in range(max_iterations):
+        # проверяем условие Армихо
+        if f(point - alpha * current_gradient) > f(point) - c1 * alpha * np.dot(current_gradient, current_gradient):
+            alpha = alpha * tau
+        elif f(point - alpha * current_gradient) < c2 * np.dot(current_gradient, current_gradient):
+            alpha = alpha + alpha * tau
+        else: 
             break
+
     return alpha
 
-# def gradient_descent_wolfe(f, point: np.array, step: float, tolerance: float, max_iterations, c1=0.1, c2=0.9, tau=0.7):
 # Градиентный спуск с выбором шага по условию Вульфа
-def gradient_descent_wolfe(f, point: np.array, step: float, tolerance: float, max_iterations, c1: float, c2: float, tau: float, tracker: Tracker):
+def gradient_descent_wolfe(
+    f, 
+    point: np.array, 
+    step: float, 
+    tolerance: float, 
+    max_iterations: int, 
+    c1: float, 
+    c2: float, 
+    tau: float, 
+    tracker: Tracker
+) -> np.array:
     tracker.track(point)
 
-    for i in range(max_iterations):
+    for _ in range(max_iterations):
         current_gradient = gradient(point)
         if np.linalg.norm(current_gradient) < tolerance:
             break
-        alpha = backtracking_wolfe(f, grad_f, point, step, c1, c2, tau)
+        alpha = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations / 100)
         point -= alpha * grad
         tracker.track(point)
 
