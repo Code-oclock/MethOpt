@@ -42,7 +42,14 @@ class Tracker:
 #----------------------
 
 # Градиентный спуск с константным шагом
-def gradient_descent_fixed(f, point: np.array, step: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+def gradient_descent_fixed(
+    f, 
+    point: np.array,
+    step: float, 
+    tolerance: float, 
+    max_iterations: int, 
+    tracker: Tracker
+) -> np.array:
     tracker.track(point)
 
     for _ in range(max_iterations):
@@ -57,7 +64,14 @@ def gradient_descent_fixed(f, point: np.array, step: float, tolerance: float, ma
     return np.array(point)
 
 # Градиентный спуск с уменьшающимся шагом
-def gradient_descent_decreasing(f, point: np.array, step: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+def gradient_descent_decreasing(
+    f, 
+    point: np.array, 
+    step: float, 
+    tolerance: float, 
+    max_iterations: int, 
+    tracker: Tracker
+) -> np.array:
     tracker.track(point)
 
     for i in range(1, max_iterations):
@@ -71,32 +85,53 @@ def gradient_descent_decreasing(f, point: np.array, step: float, tolerance: floa
         tracker.track(point)
     return np.array(point)
 
-# Стратегия выбора шага Армихо
-def backtracking_armijo(f, grad_f, point, alpha=1.0, c=np.random.uniform(0, 1), tau=0.7):
-    grad = grad_f(point)
+# Стратегия выбора шага по условию Армихо
+def backtracking_armijo(
+    f, 
+    point: np.array, 
+    alpha: float, 
+    c: float, 
+    tau
+):
     # Условие Армихо: 
     #     f(x - alpha * grad) <= f(x) - c * alpha * (||grad||^2)
-    while f(point - alpha * grad) > f(point) - c * alpha * np.dot(grad, grad):
+
+    current_gradient = gradient(f, point)
+    # Новая точка
+    x_new = point - alpha * current_gradient
+    # Минимально допустимое уменьшение функции 
+    l_alpha = f(point) - c * alpha * np.dot(current_gradient, current_gradient)
+    # Проверяем щан удовлетворяет условию Армихо
+    while f(x_new) > l_alpha:
         alpha *= tau  # уменьшаем шаг
     return alpha
 
 #def gradient_descent_armijo(f, point: np.array, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1, tracker: Tracker):
 
-# Градиентный спуск со стратегией выбора шага по условию Армихо
-def gradient_descent_armijo(f, point: np.array, step: float, tolerance: float, max_iterations: int, c: float, tau: float, tracker: Tracker) -> np.array:
+# Градиентный спуск с выбором шага по условию Армихо
+def gradient_descent_armijo(
+    f, 
+    point: np.array, 
+    step: float, 
+    tolerance: float, 
+    max_iterations: int, 
+    tau: float, 
+    tracker: Tracker
+) -> np.array:
     tracker.track(point)
     for i in range(max_iterations):
         current_gradient = gradient(f, point)
+        # Если норма градиента меньше заданной точности, то завершаем поиск
         if np.linalg.norm(current_gradient) < tolerance: break
 
+        # Находим шаг удовлетворяющий условию Армихо
         alpha = backtracking_armijo(f, current_gradient, point, step, np.random.uniform(0, 1), tau)
         point -= alpha * current_gradient
         tracker.track(point)
         
     return np.array(point)
 
-# 1.4 Градиентный спуск с подбором шага по условиям Вульфа
-# Здесь проверяются два условия: условие Армихо и условие кривизны.
+# Стратегия выбора шага по условию Вульфа
 def backtracking_wolfe(f, grad_f, point, alpha, c1, c2, tau, max_iter=50):
     grad_x = grad_f(point)
     phi0 = f(point)
@@ -116,20 +151,20 @@ def backtracking_wolfe(f, grad_f, point, alpha, c1, c2, tau, max_iter=50):
             break
     return alpha
 
+# def gradient_descent_wolfe(f, point: np.array, step: float, tolerance: float, max_iterations, c1=0.1, c2=0.9, tau=0.7):
+# Градиентный спуск с выбором шага по условию Вульфа
+def gradient_descent_wolfe(f, point: np.array, step: float, tolerance: float, max_iterations, c1: float, c2: float, tau: float, tracker: Tracker):
+    tracker.track(point)
 
-
-def gradient_descent_wolfe(f, grad_f, point, h, tol=1e-6, max_iter=1000, c1=0.1, c2=0.9, tau=0.7):
-    path = [[point[0]], [point[1]]]
-    for i in range(max_iter):
-        grad = grad_f(point)
-        if np.linalg.norm(grad) < tol:
+    for i in range(max_iterations):
+        current_gradient = gradient(point)
+        if np.linalg.norm(current_gradient) < tolerance:
             break
-        alpha = backtracking_wolfe(f, grad_f, point, h, c1, c2, tau)
+        alpha = backtracking_wolfe(f, grad_f, point, step, c1, c2, tau)
         point -= alpha * grad
-        path[0].append(point[0])
-        path[1].append(point[1])
-    print("Кол-во итераций:", i)
-    return np.array(point), np.array(path)
+        tracker.track(point)
+
+    return np.array(point)
 
 #############################
 # Часть 2. Одномерный поиск минимума
