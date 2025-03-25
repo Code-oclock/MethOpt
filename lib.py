@@ -95,15 +95,15 @@ def backtracking_armijo(
 ):
     # Условие Армихо: 
     #     f(x - alpha * grad) <= f(x) - c * alpha * (||grad||^2)
+    #
+    #   f(x - alpha * grad) 
+    #     - текущее значение после шага спуска
+    #   f(x) - c * alpha * (||grad||^2) 
+    #     - минимально допустимое уменьшение функции
 
     current_gradient = gradient(f, point)
-    # Новая точка
-    x_new = point - alpha * current_gradient
-    # Минимально допустимое уменьшение функции 
-    l_alpha = f(point) - c * alpha * np.dot(current_gradient, current_gradient)
-    # Проверяем щан удовлетворяет условию Армихо
-    while f(x_new) > l_alpha:
-        alpha *= tau  # уменьшаем шаг
+    while f(point - alpha * current_gradient) > f(point) - c * alpha * np.dot(current_gradient, current_gradient):
+        alpha *= tau
     return alpha
 
 #def gradient_descent_armijo(f, point: np.array, h, tol=1e-6, max_iter=100_000, c=1e-4, tau=0.1, tracker: Tracker):
@@ -119,7 +119,7 @@ def gradient_descent_armijo(
     tracker: Tracker
 ) -> np.array:
     tracker.track(point)
-    for i in range(max_iterations):
+    for _ in range(max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
         if np.linalg.norm(current_gradient) < tolerance: break
