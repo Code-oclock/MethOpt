@@ -160,18 +160,26 @@ def golden_section_search(f, a, b, tol=1e-6, max_iter=100):
             fd = f(d)
     return (a + b) / 2
 
-def bisection_search(f: function, a: int, b: int, tolerance: int, delta=1e-6, max_iter=100):
-    for _ in range(max_iter):
-        if abs(b - a) < tol:
+def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: int):
+    delta = tolerance
+    for _ in range(max_iterations):
+        # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
+        if abs(end - start) < tolerance:
             break
-        mid = (a + b) / 2
-        c = mid - delta
-        d = mid + delta
-        if f(c) < f(d):
-            b = d
+        # Находим середину отрезка
+        mid = (start + end) / 2
+        # Отступаем от середины на delta
+        left = mid - delta
+        right = mid + delta
+
+        # Если значение функции в левой точке меньше, чем в правой, то сдвигаем правую границу (иначе левую)
+        if f(left) < f(right):
+            end = right
         else:
-            a = c
-    return (a + b) / 2
+            start = left 
+    # Возвращаем середину отрезка
+    middle = (start + end) / 2
+    return middle
 
 def gradient_descent_golden(f, grad_f, point, tol=1e-6, max_iter=100):
     path = [[point[0]], [point[1]]]
@@ -187,7 +195,7 @@ def gradient_descent_golden(f, grad_f, point, tol=1e-6, max_iter=100):
         path[1].append(point[1])
     return np.array(point), np.array(path)
 
-def gradient_descent_dichotomy(f: function, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
     tracker.track(point)
 
     for _ in range(max_iterations):
@@ -198,7 +206,7 @@ def gradient_descent_dichotomy(f: function, point: np.array, tolerance: float, m
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом дихотомии
-        h = bisection_search(g, 0, 1, tolerance=1e-6)
+        h = bisection_search(g, 0, 1, 1e-6, 100)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= h * current_gradient
 
