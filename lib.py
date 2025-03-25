@@ -1,35 +1,60 @@
+from typing import List
 import numpy as np
 
-global i
-
+# Функция для которой ищем минимум
+# f(x, y) = x^2 + y^2
 def f(point):
     x, y = point
     return x**2 + y**2
 
-def grad_f(point):
+# Градиент функции f в точке
+def gradient(f, point: np.array):
     x, y = point
     return np.array([2 * x, 2 * y])
 
+# Сечение функции f плоскостью
 def g(point):
     x, y = point
-    return (1 - x)**2 + 100 * (y - x**2) ** 2 # f(x,y) = (a-x)^2 + b(y - x^2)^2 Розенброка
+    return (1 - x)**2 + 100 * (y - x**2) ** 2 
+# f(x,y) = (a-x)^2 + b(y - x^2)^2 Розенброка
 
+# Градиент функции g в точке
 def grad_g(point):
     x, y = point
     return np.array([-2 * (1 - x) - 400 * x * (y - x**2), 200 * (y - x**2)])
 
+class Tracker:
+    def __init__(self) -> None:
+        self.__path = [[], []]
+        self.__iterations = 0
 
-def gradient_descent_fixed(f, grad_f, point, h, tol=1e-3, max_iter=100_000):
-    path = [[point[0]], [point[1]]]
-    for i in range(max_iter):
-        grad = grad_f(point)
-        if np.linalg.norm(grad) < tol:
+    def track(self, point: np.array) -> None:
+        self.__path[0].append(point[0])
+        self.__path[1].append(point[1])
+
+        self.__iterations += 1
+
+    @property
+    def coordinates(self) -> np.array:
+        return self.__path
+    
+#----------------------
+#       ЧАСТЬ 1       |
+#----------------------
+
+# Градиентный спуск с константным шагом
+def gradient_descent_fixed(f, point: np.array, h: float, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+    tracker.track(point)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point)
+        if np.linalg.norm(current_gradient) < tolerance:
             break
-        point -= h * grad
-        path[0].append(point[0])
-        path[1].append(point[1])
-    print("Кол-во итераций:", i)
-    return np.array(point), np.array(path)
+        point -= h * current_gradient
+        
+        tracker.track(point)
+        
+    return np.array(point)
 
 def gradient_descent_decreasing(f, grad_f, point, h, tol=1e-3, max_iter=100_000):
     path = [[point[0]], [point[1]]]
