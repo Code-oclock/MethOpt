@@ -45,8 +45,8 @@ def rozenbrok(point):
 
 def draw_all(f, filename, coordinates):
     # draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, filename + '.gif', filename)
-    draw.draw(f, filename + '.png', coordinates)
-    draw.draw_interactive(f, filename + '.html', coordinates)
+    draw.draw(f, "drawings/" + filename + '.png', coordinates)
+    draw.draw_interactive(f, "drawings/" + filename + '.html', coordinates)
 
 if __name__ == "__main__":
 

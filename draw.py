@@ -4,8 +4,6 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import matplotlib.animation as animation
 
-import lib
-
 def draw(f, fileName, trace):
     x_vals, y_vals = trace[0], trace[1]
     x = np.linspace(-4, 4, 100)
