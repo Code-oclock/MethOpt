@@ -11,7 +11,8 @@ def draw(f, fileName, trace):
     X, Y = np.meshgrid(x, y)
     Z = f([X, Y])
     plt.figure(figsize=(8, 6))
-    plt.contour(X, Y, Z, levels=20, cmap='viridis')
+    plt.contour(X, Y, Z, levels=20, cmap
+                ='viridis')
     plt.plot(x_vals, y_vals, marker='o', color='r', markersize=3, label="Path of gradient descent")
     plt.title("Gradient Descent with Constant Step Size")
     plt.xlabel("x")

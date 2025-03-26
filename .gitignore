@@ -1,4 +1,6 @@
 .DS_Store
-
+drawings/
+drawings.zip
 .vscode/
 __pycache__/
+.idea/
