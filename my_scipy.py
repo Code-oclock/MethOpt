@@ -1,6 +1,6 @@
 from scipy.optimize import minimize, minimize_scalar
 import numpy as np
-import lib
+from lib import Tracker
 
 def minimize_BFGS(f, point: np.array, tolerancy: float):
     result_quadratic = minimize(f, 
@@ -12,7 +12,7 @@ def minimize_BFGS(f, point: np.array, tolerancy: float):
     raise Exception('Минимум не найден')
 
 
-def minimize_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: lib.Tracker):
+def minimize_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker):
     tracker.track(point)
     for _ in range(max_iterations):
         current_gradient = lib.gradient(f, point)
@@ -25,8 +25,7 @@ def minimize_golden(f, point: np.array, tolerance: float, max_iterations: int, t
         tracker.track(point)
     return np.array(point), tracker.iterations()
 
-
-def minimize_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: lib.Tracker):
+def minimize_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker):
     tracker.track(point)
     for _ in range(max_iterations):
         current_gradient = lib.gradient(f, point)
@@ -39,23 +38,3 @@ def minimize_dichotomy(f, point: np.array, tolerance: float, max_iterations: int
 
         tracker.track(point)
     return np.array(point), tracker.iterations()
-
-def scipy_optimize(f):
-    print("Нахождение минимума функции с помощью квазиньютоновского метода Бройдена-Флетчера-Гольдфарба-Шанно (BFGS)")
-    x_min, iterations = scp.minimize_BFGS(f, START_POINT.copy(), TOLERANCE)
-    print(f"""Минимум функции в точке: {x_min}
-          Значение функции в точке: {f(x_min)}
-          Потрачено итераций: {iterations}""")
-
-    print("Нахождение минимума функции с помощью метода золотого сечения")
-    x_min, iterations = scp.minimize_golden(f, START_POINT.copy(), TOLERANCE, MAX_ITERATIONS, Tracker())
-    print(f"""Минимум функции в точке: {x_min}
-          Значение функции в точке: {f(x_min)}
-          Потрачено итераций: {iterations}""")
-    
-    print("Нахождение минимума функции с помощью метода дихотомии")
-    x_min, iterations = scp.minimize_dichotomy(f, START_POINT.copy(), TOLERANCE, MAX_ITERATIONS, Tracker())
-    print(f"""Минимум функции в точке: {x_min}
-          Значение функции в точке: {f(x_min)}
-          Потрачено итераций: {iterations}""")
-    
