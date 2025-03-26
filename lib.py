@@ -2,22 +2,8 @@ from typing import List
 import numpy as np
 from autograd import grad
 
-# Функция для которой ищем минимум
-# f(x, y) = x^2 + y^2
-def f_quadratic_standart(point):
-    x, y = point
-    return x**2 + y**2
-
-# Функция для которой ищем минимум (2) - Розенброк
-# f(x, y) = (1 - x)^2 + 100 * (y - x^2)^2
-def rozenbrok(point):
-    x, y = point
-    return (1 - x)**2 + 100 * (y - x**2) ** 2 
-
-
 # Градиент функции f в точке
 def gradient(f, point: np.array):
-    x, y = point
     grad_f = grad(f)
     return grad_f(point)
 
@@ -36,6 +22,10 @@ class Tracker:
     @property
     def coordinates(self) -> np.array:
         return self.__path
+    
+    @property
+    def iterations(self) -> int:
+        return self.__iterations
     
 #----------------------
 #       ЧАСТЬ 1       |
@@ -117,13 +107,14 @@ def gradient_descent_armijo(
     tracker: Tracker
 ) -> np.array:
     tracker.track(point)
+
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
         if np.linalg.norm(current_gradient) < tolerance: break
 
         # Находим шаг удовлетворяющий условию Армихо
-        alpha = backtracking_armijo(f, current_gradient, point, step, np.random.uniform(0, 1), tau)
+        alpha = backtracking_armijo(f, point, step, np.random.uniform(0, 1), tau)
         point -= alpha * current_gradient
         tracker.track(point)
         
@@ -139,7 +130,7 @@ def backtracking_wolfe(
     tau: float, 
     max_iterations: int
 ) -> float:
-    current_gradient = gradient(point)
+    current_gradient = gradient(f, point)
     for _ in range(max_iterations):
         # проверяем условие Армихо
         if f(point - alpha * current_gradient) > f(point) - c1 * alpha * np.dot(current_gradient, current_gradient):
@@ -166,20 +157,22 @@ def gradient_descent_wolfe(
     tracker.track(point)
 
     for _ in range(max_iterations):
-        current_gradient = gradient(point)
+        current_gradient = gradient(f, point)
         if np.linalg.norm(current_gradient) < tolerance:
             break
-        alpha = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations / 100)
-        point -= alpha * grad
+        alpha = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations // 100)
+        point -= alpha * current_gradient
         tracker.track(point)
 
     return np.array(point)
 
-#############################
-# Часть 2. Одномерный поиск минимума
-#############################
+#----------------------
+#       ЧАСТЬ 2       |
+#----------------------
 
 # Здесь предполагается, что функция f(point) является одномерной и имеет один минимум на отрезке [start, end].
+
+
 def golden_section_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
     phi = (np.sqrt(5) - 1) / 2  # Золотое сечение ~0.618
     # Находим две точки c и d, которые делят отрезок [start, end] в пропорции золотого сечения: [start, c, d, end]
@@ -202,6 +195,24 @@ def golden_section_search(f, start: int, end: int, tolerance: float, max_iterati
     middle = (start + end) / 2
     return middle
 
+def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
+    tracker.track(point)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point)
+        # Если норма градиента меньше заданной точности, то завершаем поиск
+        if np.linalg.norm(current_gradient) < tolerance:
+            break
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point - alpha * current_gradient)
+        # Поиск шага методом золотого сечения
+        step = golden_section_search(g, 0, 1, 1e-6, 100)
+        # Обновляем координаты x_k = x_k-1 - h * grad(f)
+        point -= step * current_gradient
+
+        tracker.track(point)
+    return np.array(point)
+
 def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
     delta = tolerance
     for _ in range(max_iterations):
@@ -222,24 +233,6 @@ def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: 
     # Возвращаем середину отрезка
     middle = (start + end) / 2
     return middle
-
-def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
-    tracker.track(point)
-
-    for _ in range(max_iterations):
-        current_gradient = gradient(f, point)
-        # Если норма градиента меньше заданной точности, то завершаем поиск
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
-        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
-        def g(alpha): return f(point - alpha * current_gradient)
-        # Поиск шага методом золотого сечения
-        step = golden_section_search(g, 0, 1, 1e-6, 100)
-        # Обновляем координаты x_k = x_k-1 - h * grad(f)
-        point -= step * current_gradient
-
-        tracker.track(point)
-    return np.array(point)
 
 def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
     tracker.track(point)

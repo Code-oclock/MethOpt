@@ -6,9 +6,7 @@ import matplotlib.animation as animation
 
 import lib
 
-f = lib.f
-
-def draw(fileName, trace):
+def draw(f, fileName, trace):
     x_vals, y_vals = trace[0], trace[1]
     x = np.linspace(-4, 4, 100)
     y = np.linspace(-4, 4, 100)
@@ -26,7 +24,7 @@ def draw(fileName, trace):
     plt.savefig(fileName)
     plt.close()
 
-def draw_interactive(fileName, trace):
+def draw_interactive(f, fileName, trace):
     x_vals, y_vals = trace[0], trace[1]
     z_vals = [f([x, y]) for x, y in zip(x_vals, y_vals)]
     
@@ -69,7 +67,7 @@ def draw_interactive(fileName, trace):
     fig = go.Figure(data=[surface, trajectory], layout=layout)
     pio.write_html(fig, file=fileName, auto_open=False)
 
-def animate_2d_gradient_descent(path, x_opt, output_filename, title="Gradient Descent"):
+def animate_2d_gradient_descent(f, path, x_opt, output_filename, title="Gradient Descent"):
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Контурный график
@@ -96,7 +94,6 @@ def animate_2d_gradient_descent(path, x_opt, output_filename, title="Gradient De
         return line, start_point, end_point
 
     def update(frame):
-        print(frame)
         if frame == len(path[0]) - 1:  # Последний кадр
             end_point.set_data(x_opt[:1], x_opt[1:2])  # Показываем точку минимума
             end_point.set_visible(True)
