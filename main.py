@@ -4,7 +4,7 @@ import lib
 from lib import Tracker
 import my_scipy as scp
 
-import quadrartic_demonstration as config
+# import quadrartic_demonstration as config
 import rozenbrok_demonstration as config
 
 def draw_all(f, filename, coordinates, x_min_fixed):
@@ -25,34 +25,34 @@ def scipy_optimize(f):
 
 if __name__ == "__main__":
     tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_fixed(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, tracker)
-    draw_all(config.f, "fixed", tracker.coordinates, x_min_fixed)
-    print("Fixed: ", x_min_fixed, "Iteartions:", tracker.iterations)
+#     x_min_fixed = lib.gradient_descent_fixed(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, tracker)
+#     draw_all(config.f, "fixed", tracker.coordinates, x_min_fixed)
+#     print("Fixed: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
-    tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_decreasing(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS // 100, tracker)
-    draw_all(config.f, "decreasing", tracker.coordinates, x_min_fixed)
-    print("Decreasing: ", x_min_fixed, "Iteartions:", tracker.iterations)
+#     tracker = Tracker()
+#     x_min_fixed = lib.gradient_descent_decreasing(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS // 100, tracker)
+#     draw_all(config.f, "decreasing", tracker.coordinates, x_min_fixed)
+#     print("Decreasing: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
-    tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_armijo(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, config.TAU, tracker)
-    draw_all(config.f, "armijo", tracker.coordinates, x_min_fixed)
-    print("Armijo: ", x_min_fixed, "Iteartions:", tracker.iterations)
+#     tracker = Tracker()
+#     x_min_fixed = lib.gradient_descent_armijo(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, config.TAU, tracker)
+#     draw_all(config.f, "armijo", tracker.coordinates, x_min_fixed)
+#     print("Armijo: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
     tracker = Tracker()
     x_min_fixed = lib.gradient_descent_wolfe(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, config.C1, config.C2, config.TAU, tracker)
     draw_all(config.f, "wolfe", tracker.coordinates, x_min_fixed)
     print("Wolfe: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
-    tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_golden(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
-    draw_all(config.f, "golden", tracker.coordinates, x_min_fixed)
-    print("Golden: ", x_min_fixed, "Iteartions:", tracker.iterations)
+#     tracker = Tracker()
+#     x_min_fixed = lib.gradient_descent_golden(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
+#     draw_all(config.f, "golden", tracker.coordinates, x_min_fixed)
+#     print("Golden: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
-    tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_dichotomy(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
-    draw_all(config.f, "dichotomy", tracker.coordinates, x_min_fixed)
-    print("Dichotomy: ", x_min_fixed, "Iteartions:", tracker.iterations)
+#     tracker = Tracker()
+#     x_min_fixed = lib.gradient_descent_dichotomy(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
+#     draw_all(config.f, "dichotomy", tracker.coordinates, x_min_fixed)
+#     print("Dichotomy: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
     print("-----------------------SCIPY-----------------------")
 
