@@ -206,7 +206,7 @@ def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом золотого сечения
-        step = golden_section_search(g, 0, 1, 1e-6, 100)
+        step = golden_section_search(g, 0, 1, tolerance / 100, max_iterations // 1000)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= step * current_gradient
 
@@ -245,7 +245,7 @@ def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterati
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом дихотомии
-        step = bisection_search(g, 0, 1, 1e-6, 100)
+        step = bisection_search(g, 0, 1, tolerance / 100, max_iterations // 1000)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= step * current_gradient
 

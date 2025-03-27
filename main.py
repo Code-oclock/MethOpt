@@ -5,12 +5,12 @@ from lib import Tracker
 import my_scipy as scp
 
 import quadrartic_demonstration as config
-# import rozenbrok_demonstration as config
+import rozenbrok_demonstration as config
 
 def draw_all(f, filename, coordinates, x_min_fixed):
-    draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'quadratic_demo_drawings/' + filename + '.gif', filename)
-    draw.draw(f, "quadratic_demo_drawings/" + filename + '.png', coordinates)
-    draw.draw_interactive(f, "quadratic_demo_drawings/" + filename + '.html', coordinates)
+#     draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'quadratic_demo_drawings/' + filename + '.gif', filename)
+    draw.draw(f, "rozenbrok_demo_drawings/" + filename + '.png', coordinates)
+    draw.draw_interactive(f, "rozenbrok_demo_drawings/" + filename + '.html', coordinates)
 
 def scipy_optimize(f):
     x_min, iterations = scp.minimize_BFGS(f, config.START_POINT.copy(), config.TOLERANCE)
@@ -35,12 +35,12 @@ if __name__ == "__main__":
     print("Decreasing: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
     tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_armijo(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, 0.7, tracker)
+    x_min_fixed = lib.gradient_descent_armijo(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, config.TAU, tracker)
     draw_all(config.f, "armijo", tracker.coordinates, x_min_fixed)
     print("Armijo: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
     tracker = Tracker()
-    x_min_fixed = lib.gradient_descent_wolfe(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, 0.5, 0.5, 0.7, tracker)
+    x_min_fixed = lib.gradient_descent_wolfe(config.f, config.START_POINT.copy(), config.STEP, config.TOLERANCE, config.MAX_ITERATIONS, config.C1, config.C2, config.TAU, tracker)
     draw_all(config.f, "wolfe", tracker.coordinates, x_min_fixed)
     print("Wolfe: ", x_min_fixed, "Iteartions:", tracker.iterations)
 
