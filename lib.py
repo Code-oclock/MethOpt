@@ -158,8 +158,9 @@ def gradient_descent_wolfe(
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
+        # Если норма градиента меньше заданной точности, то завершаем поиск
+        if np.linalg.norm(current_gradient) < tolerance: break
+
         alpha = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations // 100)
         point -= alpha * current_gradient
         tracker.track(point)
@@ -181,8 +182,7 @@ def golden_section_search(f, start: int, end: int, tolerance: float, max_iterati
 
     for _ in range(max_iterations):
         # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
-        if abs(end - start) < tolerance:
-            break
+        if abs(end - start) < tolerance: break
         # Если значение функции в точке c меньше, чем в точке d, то сдвигаем правую границу (иначе левую)
         if f(c) < f(d):
             end = d # сдвигаем правую границу
@@ -201,8 +201,8 @@ def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
+        if np.linalg.norm(current_gradient) < tolerance: break
+
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом золотого сечения
@@ -217,8 +217,8 @@ def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: 
     delta = tolerance
     for _ in range(max_iterations):
         # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
-        if abs(end - start) < tolerance:
-            break
+        if abs(end - start) < tolerance: break
+
         # Находим середину отрезка
         mid = (start + end) / 2
         # Отступаем от середины на delta
@@ -240,8 +240,8 @@ def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterati
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
         # Если норма градиента меньше заданной точности, то завершаем поиск
-        if np.linalg.norm(current_gradient) < tolerance:
-            break
+        if np.linalg.norm(current_gradient) < tolerance: break
+        
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом дихотомии
