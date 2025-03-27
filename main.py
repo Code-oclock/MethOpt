@@ -8,9 +8,9 @@ import quadrartic_demonstration as config
 # import rozenbrok_demonstration as config
 
 def draw_all(f, filename, coordinates, x_min_fixed):
-    draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'drawings/' + filename + '.gif', filename)
-    draw.draw(f, "drawings/" + filename + '.png', coordinates)
-    draw.draw_interactive(f, "drawings/" + filename + '.html', coordinates)
+    draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'quadratic_demo_drawings/' + filename + '.gif', filename)
+    draw.draw(f, "quadratic_demo_drawings/" + filename + '.png', coordinates)
+    draw.draw_interactive(f, "quadratic_demo_drawings/" + filename + '.html', coordinates)
 
 def scipy_optimize(f):
     x_min, iterations = scp.minimize_BFGS(f, config.START_POINT.copy(), config.TOLERANCE)
