@@ -4,11 +4,11 @@ import lib
 from lib import Tracker
 import my_scipy as scp
 
-# import quadrartic as config
-import rozenbrok as config
+import quadrartic_demonstration as config
+# import rozenbrok_demonstration as config
 
 def draw_all(f, filename, coordinates, x_min_fixed):
-#     draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'drawings/' + filename + '.gif', filename)
+    draw.animate_2d_gradient_descent(f, coordinates, x_min_fixed, 'drawings/' + filename + '.gif', filename)
     draw.draw(f, "drawings/" + filename + '.png', coordinates)
     draw.draw_interactive(f, "drawings/" + filename + '.html', coordinates)
 
