@@ -1,4 +1,3 @@
-from typing import List
 import numpy as np
 from autograd import grad
 
@@ -38,9 +37,15 @@ def gradient_descent_fixed(
     step: float, 
     tolerance: float, 
     max_iterations: int, 
-    tracker: Tracker
+    tracker: Tracker = None
 ) -> np.array:
-    tracker.track(point)
+    print("-----FIXED INPUT-----")
+    print("Point:", point)
+    print("Step: ", step)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("---------------------")
+    if tracker is not None: tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
@@ -50,7 +55,7 @@ def gradient_descent_fixed(
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= step * current_gradient
         
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
     return np.array(point)
 
 # Градиентный спуск с уменьшающимся шагом
@@ -60,9 +65,16 @@ def gradient_descent_decreasing(
     step: float, 
     tolerance: float, 
     max_iterations: int, 
-    tracker: Tracker
+    tracker: Tracker = None
 ) -> np.array:
-    tracker.track(point)
+    print("-----DECR INPUT-----")
+    print("Point:", point)
+    print("Step: ", step)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("---------------------")
+
+    if tracker is not None: tracker.track(point)
 
     for i in range(1, max_iterations):
         current_gradient = gradient(f, point)
@@ -72,7 +84,7 @@ def gradient_descent_decreasing(
         # Обновляем координаты x_k = x_k-1 - (h / k) * grad(f)
         point -= step / i * current_gradient
         
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
     return np.array(point)
 
 # Стратегия выбора шага по условию Армихо
@@ -104,9 +116,16 @@ def gradient_descent_armijo(
     tolerance: float, 
     max_iterations: int, 
     tau: float, 
-    tracker: Tracker
+    tracker: Tracker = None
 ) -> np.array:
-    tracker.track(point)
+    print("-----ARMIJO INPUT-----")
+    print("Point:", point)
+    print("Step: ", step)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("Tau:  ", tau)
+    print("---------------------")
+    if tracker is not None: tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
@@ -116,7 +135,7 @@ def gradient_descent_armijo(
         # Находим шаг удовлетворяющий условию Армихо
         alpha = backtracking_armijo(f, point, step, np.random.uniform(0, 1), tau)
         point -= alpha * current_gradient
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
         
     return np.array(point)
 
@@ -152,9 +171,18 @@ def gradient_descent_wolfe(
     c1: float, 
     c2: float, 
     tau: float, 
-    tracker: Tracker
+    tracker: Tracker = None
 ) -> np.array:
-    tracker.track(point)
+    print("-----WOLFE INPUT-----")
+    print("Point:", point)
+    print("Step: ", step)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("C1:   ", c1)
+    print("C2:   ", c2)
+    print("Tau:  ", tau)
+    print("---------------------")
+    if tracker is not None: tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
@@ -163,7 +191,7 @@ def gradient_descent_wolfe(
 
         alpha = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations // 100)
         point -= alpha * current_gradient
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
 
     return np.array(point)
 
@@ -174,7 +202,13 @@ def gradient_descent_wolfe(
 # Здесь предполагается, что функция f(point) является одномерной и имеет один минимум на отрезке [start, end].
 
 
-def golden_section_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
+def golden_section_search(
+    f, 
+    start: int, 
+    end: int, 
+    tolerance: float, 
+    max_iterations: int
+) -> float:
     phi = (np.sqrt(5) - 1) / 2  # Золотое сечение ~0.618
     # Находим две точки c и d, которые делят отрезок [start, end] в пропорции золотого сечения: [start, c, d, end]
     c = end - (end - start) * phi
@@ -195,8 +229,19 @@ def golden_section_search(f, start: int, end: int, tolerance: float, max_iterati
     middle = (start + end) / 2
     return middle
 
-def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
-    tracker.track(point)
+def gradient_descent_golden(
+    f, 
+    point: np.array, 
+    tolerance: float, 
+    max_iterations: int, 
+    tracker: Tracker = None
+) -> np.array:
+    print("-----GOLDEN INPUT-----")
+    print("Point:", point)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("---------------------")
+    if tracker is not None: tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
@@ -206,14 +251,20 @@ def gradient_descent_golden(f, point: np.array, tolerance: float, max_iterations
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом золотого сечения
-        step = golden_section_search(g, 0, 1, tolerance / 100, max_iterations // 1000)
+        step = golden_section_search(g, 0, 1, tolerance / 10, max_iterations // 100)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= step * current_gradient
 
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
     return np.array(point)
 
-def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: int) -> float:
+def bisection_search(
+    f, 
+    start: int, 
+    end: int, 
+    tolerance: float, 
+    max_iterations: int
+) -> float:
     delta = tolerance
     for _ in range(max_iterations):
         # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
@@ -234,8 +285,19 @@ def bisection_search(f, start: int, end: int, tolerance: float, max_iterations: 
     middle = (start + end) / 2
     return middle
 
-def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: Tracker) -> np.array:
-    tracker.track(point)
+def gradient_descent_dichotomy(
+    f, 
+    point: np.array, 
+    tolerance: float, 
+    max_iterations: int, 
+    tracker: Tracker = None
+) -> np.array:
+    print("-----DICH INPUT-----")
+    print("Point:", point)
+    print("Tol:  ", tolerance)
+    print("Iters:", max_iterations)
+    print("---------------------")
+    if tracker is not None: tracker.track(point)
 
     for _ in range(max_iterations):
         current_gradient = gradient(f, point)
@@ -245,9 +307,9 @@ def gradient_descent_dichotomy(f, point: np.array, tolerance: float, max_iterati
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * current_gradient)
         # Поиск шага методом дихотомии
-        step = bisection_search(g, 0, 1, tolerance / 100, max_iterations // 1000)
+        step = bisection_search(g, 0, 1, tolerance / 10, max_iterations // 100)
         # Обновляем координаты x_k = x_k-1 - h * grad(f)
         point -= step * current_gradient
 
-        tracker.track(point)
+        if tracker is not None: tracker.track(point)
     return np.array(point)
