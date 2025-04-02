@@ -1,6 +1,8 @@
-from scipy.optimize import minimize, minimize_scalar
+from scipy.optimize import minimize, minimize_scalar, linesearch
 import numpy as np
 import lib
+
+np.set_printoptions(formatter={'float': '{:.9f}'.format}, suppress=True)
 
 def minimize_BFGS(f, point: np.array, tolerancy: float):
     result_quadratic = minimize(f, 
@@ -10,6 +12,25 @@ def minimize_BFGS(f, point: np.array, tolerancy: float):
     if result_quadratic.success:
         return result_quadratic.x, result_quadratic.nit
     raise Exception('Минимум не найден')
+
+def minimize_linesearch(f, point: np.array, tolerance: float, max_iterations: int, tracker: lib.Tracker):
+    tracker.track(point)
+    for _ in range(max_iterations):
+        current_gradient = lib.gradient(f, point)
+        if np.linalg.norm(current_gradient) < tolerance:
+            break
+        pk = -current_gradient
+        alpha, fc, gc, new_fval, old_fval, new_slope = linesearch.line_search(
+            f,
+            lambda x: lib.gradient(f, x),
+            point,
+            pk,
+            current_gradient,
+            f(point)
+        )
+        point = point + alpha * pk
+        tracker.track(point)
+    return np.array(point)
 
 
 def minimize_golden(f, point: np.array, tolerance: float, max_iterations: int, tracker: lib.Tracker):
@@ -23,7 +44,7 @@ def minimize_golden(f, point: np.array, tolerance: float, max_iterations: int, t
         step = result.x
         point -= step * current_gradient
         tracker.track(point)
-    return np.array(point), tracker.iterations
+    return np.array(point)
 
 def minimize_dichotomy(f, point: np.array, tolerance: float, max_iterations: int, tracker: lib.Tracker):
     tracker.track(point)
@@ -37,4 +58,4 @@ def minimize_dichotomy(f, point: np.array, tolerance: float, max_iterations: int
         point -= step * current_gradient
 
         tracker.track(point)
-    return np.array(point), tracker.iterations
+    return np.array(point)
