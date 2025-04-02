@@ -1,7 +1,0 @@
-f(x, y) = x^2 + y^2
-def f(point):
-    x, y = point
-    return x**2 + y**2
-1. h > 1 - overflow независимо от start
-2. max_steps - big - хуйня (оч мал - стоп ранний) (0.5, 1 - fast пон и чем ближе - тем лучше)
-3.
