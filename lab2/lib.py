@@ -6,6 +6,11 @@ def gradient(f, point: np.array):
     grad_f = grad(f)
     return grad_f(point)
 
+def hessian(f, point: np.array):
+    grad_f = grad(f)
+    hessian_f = grad(grad_f)
+    return hessian_f(point)
+
 
 class Tracker:
     def __init__(self) -> None:
