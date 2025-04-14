@@ -79,7 +79,7 @@ def newton_method(
 
         # Выбор шага методом backtracking line search
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
-        def g(alpha): return f(point - alpha * current_gradient)
+        def g(alpha): return f(point - alpha * d)
         # Поиск шага методом золотого сечения
         step = golden_section_search(g, 0, 1, tolerance / 10, max_iterations // 100)
 
