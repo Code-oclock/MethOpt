@@ -73,7 +73,7 @@ def newton_method(
             break
         current_hessian = hessian(f, point)
 
-        # Вычисляем направление: d = - H^(-1) * grad
+        # Вычисляем направление: d = H^(-1) * grad
         d = np.linalg.solve(current_hessian, current_gradient)
 
         # Выбор шага методом backtracking line search
