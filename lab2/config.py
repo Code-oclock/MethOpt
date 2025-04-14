@@ -1,30 +1,30 @@
 import autograd.numpy as np
 
 
-def f(point):
-    x, y = point
-    return x**2 + y**2
+# def f(point):
+#     x, y = point
+#     return x**2 + y**2
 
-# QUADRATIC GOOD
-# точность нахождения минимума
-TOLERANCE = 1e-4
-# базовый щаг поиска
-STEP_FIXED = 0.3
-STEP_DECREASING = 0.9
-STEP_ARMIJO = 0.3
-STEP_WOLFE = 0.3
-# Количество итераций
-MAX_ITERATIONS = 1000
-# Начальная точка для градиентного спуска
-START_POINT = np.array([2., 4.])
-# Коэф с1
-C1 = 0.5
-# Коэф с2
-C2 = 0.5
-# Тау
-TAU = 0.2
+# # QUADRATIC GOOD
+# # точность нахождения минимума
+# TOLERANCE = 1e-4
+# # базовый щаг поиска
+# STEP_FIXED = 0.3
+# STEP_DECREASING = 0.9
+# STEP_ARMIJO = 0.3
+# STEP_WOLFE = 0.3
+# # Количество итераций
+# MAX_ITERATIONS = 1000
+# # Начальная точка для градиентного спуска
+# START_POINT = np.array([2., 4.])
+# # Коэф с1
+# C1 = 0.5
+# # Коэф с2
+# C2 = 0.5
+# # Тау
+# TAU = 0.2
 
-RESULT_FOLDER = "quadratic_good/"
+# RESULT_FOLDER = "lab2/quadratic_good/"
 
 # QUADRATIC BAD
 # TOLERANCE = 1e-4
@@ -44,7 +44,7 @@ RESULT_FOLDER = "quadratic_good/"
 # # Тау
 # TAU = 0.1
 
-# RESULT_FOLDER = "quadratic_bad/"
+# RESULT_FOLDER = "lab2/quadratic_bad/"
 
 # def f(point):
 #     x, y = point
@@ -68,7 +68,7 @@ RESULT_FOLDER = "quadratic_good/"
 # # Тау
 # TAU = 0.9
 
-# RESULT_FOLDER = "matyas_good/"
+# RESULT_FOLDER = "lab2/matyas_good/"
 
 # MATYAS BAD
 # TOLERANCE = 1e-4
@@ -88,7 +88,7 @@ RESULT_FOLDER = "quadratic_good/"
 # # Тау
 # TAU = 0.1
 
-# RESULT_FOLDER = "matyas_bad/"
+# RESULT_FOLDER = "lab2/matyas_bad/"
 
 # def f(point):
 #     x, y = point
@@ -111,7 +111,7 @@ RESULT_FOLDER = "quadratic_good/"
 # # Тау
 # TAU = 0.8
 
-# RESULT_FOLDER = "himmelblau_good_55/"
+# RESULT_FOLDER = "lab2/himmelblau_good_55/"
 
 # def f(point):
 #     x, y = point
@@ -135,7 +135,7 @@ RESULT_FOLDER = "quadratic_good/"
 # TAU = 0.8
 # NOISE = 1
 
-# RESULT_FOLDER = "matyas_with_noise_0.01/"
+# RESULT_FOLDER = "lab2/matyas_with_noise_0.01/"
 
 # def f(point):
 #     x, y = point
@@ -162,4 +162,4 @@ RESULT_FOLDER = "quadratic_good/"
 # TAU = 0.8
 # NOISE = 10
 
-# RESULT_FOLDER = "himmelblau_good_with_noise_0.01/"
+# RESULT_FOLDER = "lab2/himmelblau_good_with_noise_0.01/"

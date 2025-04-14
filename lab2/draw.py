@@ -1,8 +1,13 @@
 import numpy as np
 import plotly.graph_objects as go
 import plotly.io as pio
+import os
 
 def draw(f, fileName, trace, z_max=None):
+    directory = os.path.dirname(fileName)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+    
     x_vals, y_vals = trace[0], trace[1]
     z_vals = [f([x, y]) for x, y in zip(x_vals, y_vals)]
     
