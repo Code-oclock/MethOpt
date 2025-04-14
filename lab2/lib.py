@@ -11,7 +11,6 @@ def hessian(f, point: np.array):
     hessian_f = grad(grad_f)
     return hessian_f(point)
 
-
 class Tracker:
     def __init__(self) -> None:
         self.__path = [[], []]
