@@ -1,5 +1,7 @@
 import numpy as np
 from autograd import grad
+from autograd import hessian as autograd_hessian
+
 
 # Градиент функции f в точке
 def gradient(f, point: np.array):
@@ -7,8 +9,7 @@ def gradient(f, point: np.array):
     return grad_f(point)
 
 def hessian(f, point: np.array):
-    grad_f = grad(f)
-    hessian_f = grad(grad_f)
+    hessian_f = autograd_hessian(f)
     return hessian_f(point)
 
 class Tracker:

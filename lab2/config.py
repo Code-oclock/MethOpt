@@ -24,7 +24,7 @@ C2 = 0.5
 # Тау
 TAU = 0.2
 
-# RESULT_FOLDER = "quadratic_good/"
+RESULT_FOLDER = "quadratic_good/"
 
 # QUADRATIC BAD
 # TOLERANCE = 1e-4
