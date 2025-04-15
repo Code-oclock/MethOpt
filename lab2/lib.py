@@ -59,6 +59,75 @@ def golden_section_search(
     middle = (start + end) / 2
     return middle
 
+def bisection_search(
+    f, 
+    start: int, 
+    end: int, 
+    tolerance: float, 
+    max_iterations: int
+) -> float:
+    delta = tolerance
+    for _ in range(max_iterations):
+        # Если разница между концами отрезка меньше заданной точности, то завершаем поиск
+        if abs(end - start) < tolerance: break
+
+        # Находим середину отрезка
+        mid = (start + end) / 2
+        # Отступаем от середины на delta
+        left = mid - delta
+        right = mid + delta
+
+        # Если значение функции в левой точке меньше, чем в правой, то сдвигаем правую границу (иначе левую)
+        if f(left) < f(right):
+            end = right
+        else:
+            start = left 
+    # Возвращаем середину отрезка
+    middle = (start + end) / 2
+    return middle
+
+def backtracking_wolfe(
+    f, 
+    point: np.array, 
+    alpha: float, 
+    c1: float, 
+    c2: float, 
+    tau: float, 
+    max_iterations: int
+) -> float:
+    current_gradient = gradient(f, point)
+    for _ in range(max_iterations):
+        # проверяем условие Армихо
+        if f(point - alpha * current_gradient) > f(point) - c1 * alpha * np.dot(current_gradient, current_gradient):
+            alpha = alpha * tau
+        elif f(point - alpha * current_gradient) < c2 * np.dot(current_gradient, current_gradient):
+            alpha = alpha + alpha * tau
+        else: 
+            break
+
+    return alpha
+
+# Стратегия выбора шага по условию Армихо
+def backtracking_armijo(
+    f, 
+    point: np.array, 
+    alpha: float, 
+    c: float, 
+    tau
+) -> float:
+    # Условие Армихо: 
+    #     f(x - alpha * grad) <= f(x) - c * alpha * (||grad||^2)
+    #
+    #   f(x - alpha * grad) 
+    #     - текущее значение после шага спуска
+    #   f(x) - c * alpha * (||grad||^2) 
+    #     - минимально допустимое уменьшение функции
+
+    current_gradient = gradient(f, point)
+    while f(point - alpha * current_gradient) > f(point) - c * alpha * np.dot(current_gradient, current_gradient):
+        alpha = alpha * tau
+    return alpha
+
 def newton_method(
         f, 
         point: np.array, 
@@ -81,7 +150,9 @@ def newton_method(
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * d)
         # Поиск шага методом золотого сечения
-        step = golden_section_search(g, 0, 1, tolerance / 10, max_iterations // 100)
+        step = golden_section_search(g, 0, 1, tolerance, max_iterations // 100)
+        # step = backtracking_wolfe(f, point, 1, 0.5, 0.5, 0.8, max_iterations // 100)
+        # step = backstracking_armijo(f, point, 1, 1e-4, 0.8)
 
         point -= step * d
         if tracker is not None: tracker.track(point)
