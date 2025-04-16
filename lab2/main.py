@@ -20,15 +20,16 @@ def our_methods():
     # draw(config.f, "Newton Method", tracker.coordinates)
     # print("Newton Method with Wolfe:  ", result, "Iteartions:", tracker.iterations)
 
-    # tracker = lib.Tracker()
-    # result = lib.newton_method_with_golden(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
-    # draw(config.f, "Newton Method", tracker.coordinates)
-    # print("Newton Method with Golden:  ", result, "Iteartions:", tracker.iterations)
-
     tracker = lib.Tracker()
-    result = lib.bfgs_section_search(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
+    result = lib.newton_method_with_golden(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
     draw(config.f, "Newton Method", tracker.coordinates)
+    print(tracker.coordinates)
     print("Newton Method with Golden:  ", result, "Iteartions:", tracker.iterations)
+
+    # tracker = lib.Tracker()
+    # result = lib.bfgs_section_search(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
+    # draw(config.f, "BFGS Method realization", tracker.coordinates)
+    # print("BFGS Method realization:  ", result, "Iteartions:", tracker.iterations)
 
 def our_scipy():
     result, iterations = my_scipy.minimize_newton_CG(config.f, config.START_POINT.copy(), config.TOLERANCE)

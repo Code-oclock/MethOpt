@@ -329,6 +329,11 @@ def newton_method(
             break
         current_hessian = hessian(f, point)
 
+        # исправляем кривизну
+        min_eigval = np.linalg.eigvals(current_hessian).min()
+        if min_eigval <= 0:
+            current_hessian += (abs(min_eigval) + tolerance) * np.eye(len(point))
+
         # Вычисляем направление: d = H^(-1) * grad, если вычислить невозможно то переходим на шаг по градиенту
         try:
             d = np.linalg.solve(current_hessian, current_gradient)

@@ -111,7 +111,7 @@ import autograd.numpy as np
 # # Тау
 # TAU = 0.8
 
-# RESULT_FOLDER = "himmelblau_good_55/"
+# RESULT_FOLDER = "himmelblau_good/"
 
 # def f(point):
 #     x, y = point
@@ -135,7 +135,7 @@ import autograd.numpy as np
 # TAU = 0.8
 # NOISE = 1
 
-# RESULT_FOLDER = "matyas_with_noise_0.01/"
+# RESULT_FOLDER = "matyas_with_noise/"
 
 def f(point):
     x, y = point
@@ -152,8 +152,8 @@ MAX_ITERATIONS = 1000
 # Начальная точка для градиентного спуска
 # START_POINT = np.array([5., 5.]) # for fixed min is [2.999998518 2.000003579]
 # START_POINT = np.array([5., -5.]) # for fixed min is [3.584428654 -1.848129961]
-# START_POINT = np.array([-5., 5.]) # for fixed min is [3.584428654 -1.848129961]
-# START_POINT = np.array([-0.1, -0.5]) # for fixed min is [3.584428654 -1.848129961]
+# START_POINT = np.array([-5., 5.]) # for fixed min is [-2.805118     3.131312]
+START_POINT = np.array([0., 0.]) # for fixed min is [-3.779310   -3.283186]
 # Коэф с1
 C1 = 0.5
 # Коэф с2
@@ -162,4 +162,4 @@ C2 = 0.5
 TAU = 0.8
 NOISE = 10
 
-RESULT_FOLDER = "himmelblau_good_with_noise_0.01/"
+RESULT_FOLDER = "himmelblau_good_with_noise/"
