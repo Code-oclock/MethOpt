@@ -41,6 +41,10 @@ class Tracker:
     def iterations(self) -> int:
         return self.__iterations
     
+    @iterations.setter
+    def iterations(self, value: int) -> None:
+        self.__iterations = value
+    
 # Градиент функции f в точке
 def gradient(f, point: np.array, tracker: Tracker = None):
     if tracker is not None: tracker.gradient_called()
@@ -327,7 +331,7 @@ def newton_method(
         current_gradient = gradient(f, point, tracker)
         if np.linalg.norm(current_gradient) < tolerance:
             break
-        current_hessian = hessian(f, point)
+        current_hessian = hessian(f, point, tracker)
 
         # исправляем кривизну
         min_eigval = np.linalg.eigvals(current_hessian).min()
@@ -335,7 +339,7 @@ def newton_method(
             current_hessian += (abs(min_eigval) + tolerance) * np.eye(len(point))
 
         # Вычисляем направление: d = H^(-1) * grad, если вычислить невозможно то переходим на шаг по градиенту
-        try:
+        try:    
             d = np.linalg.solve(current_hessian, current_gradient)
         except np.linalg.LinAlgError:
             d = current_gradient
