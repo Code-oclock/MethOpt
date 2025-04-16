@@ -26,12 +26,12 @@ class Tracker:
         self.__hessian_calls += 1
 
     def print_stats(self) -> None:
-        print("-----------STATS------------")
-        print(f"  Iterations: {self.__iterations}")
-        print(f"  Func calls: {self.__f_calls}")
-        print(f"  Grad calls: {self.__gradient_calls}")
-        print(f"  Hess calls: {self.__hessian_calls}")
-        print("----------------------------")
+        print(f"#-------STATS---------")
+        print(f"|  Iterations: {self.__iterations}")
+        print(f"|  Func calls: {self.__f_calls}")
+        print(f"|  Grad calls: {self.__gradient_calls}")
+        print(f"|  Hess calls: {self.__hessian_calls}")
+        print("#---------------------")
 
     @property
     def coordinates(self) -> np.array:
@@ -395,7 +395,7 @@ def bfgs_section_search(
     # начальная матрица Гессе
     B = np.eye(dimension)
     # начальный градиент
-    current_gradient = gradient(f, point, tracker, tracker)
+    current_gradient = gradient(f, point, tracker)
     
     for _ in range(max_iterations):
         if np.linalg.norm(current_gradient) < tolerance:
