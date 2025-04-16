@@ -181,7 +181,6 @@ def bfgs_section_search(
     B = np.eye(dimension)
     # начальный градиент
     current_gradient = gradient(f, point)
-    prev_f = f(point)
 
     if tracker is not None: tracker.track(point)
     
@@ -189,11 +188,13 @@ def bfgs_section_search(
         if np.linalg.norm(current_gradient) < tolerance:
             break
         # направление спуска
-        pk = -B @ current_gradient
+        direct = -B @ current_gradient
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point + alpha * direct)
         # шаг спуска
-        alpha = backtracking_armijo(f, point, 1, 0.5, 0.05)
+        alpha = golden_section_search(g, 0, 1, tolerance, max_iterations // 100)
         # обновляем точку
-        point_new = point + alpha * pk
+        point_new = point + alpha * direct
         # новый градиент
         new_gradient = gradient(f, point_new)
         # разница градиента
@@ -203,23 +204,14 @@ def bfgs_section_search(
         point = point_new
         current_gradient = new_gradient
         # проверяем условие остановки
-        if y @ s <= 1e-5:
-            continue 
-        # определяем скалярное произведение
+        if y @ s <= 0:
+            break 
         # y @ s = (grad_new - grad) @ (x_new - x)
         rho = 1.0 / (y @ s)
         # обновляем матрицу Гессе
-        B = (np.eye(dimension) - rho * y @ s) @ B @ (np.eye(dimension) - rho * y @ s) + rho * s @ s
-        min_eigenval = np.min(np.linalg.eigvalsh(B))
-        if min_eigenval < 1e-6:
-            B += (1e-6 - min_eigenval) * np.eye(dimension)
-
-
-        new_f = f(point)
-        if abs(new_f - prev_f) < 1e-12 * (abs(new_f) + 1):
-            break
-        prev_f = new_f
-
+        I = np.eye(dimension)
+        V = (I - rho * y @ s)
+        B = V @ B @ V + rho * s @ s
         if tracker is not None: tracker.track(point)
 
     return point
