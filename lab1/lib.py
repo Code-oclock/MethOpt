@@ -154,7 +154,7 @@ def backtracking_wolfe(
         # проверяем условие Армихо
         if f(point - alpha * current_gradient) > f(point) - c1 * alpha * np.dot(current_gradient, current_gradient):
             alpha = alpha * tau
-        elif f(point - alpha * current_gradient) < c2 * np.dot(current_gradient, current_gradient):
+        elif np.dot(gradient(f, (point - alpha * current_gradient)), current_gradient) < c2 * np.dot(current_gradient, current_gradient):
             alpha = alpha + alpha * tau
         else: 
             break
