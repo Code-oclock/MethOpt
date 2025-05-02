@@ -385,7 +385,7 @@ def newton_method_with_armijo(
 ) -> np.array:
     def backtracking_armijo_search(
             f, start: int, end: int, tolerance: float, max_iterations: int):
-        return backtracking_armijo(f, point, 1, tolerance, 0.8, tracker)
+        return backtracking_armijo(f, point, 0.3, np.random.uniform(0, 1), 0.8, tracker)
     return newton_method(f, backtracking_armijo_search, point, tolerance, max_iterations, tracker)
 
 

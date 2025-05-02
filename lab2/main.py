@@ -15,6 +15,7 @@ def our_methods():
     draw(config.f, "Newton Method with Armijo", tracker.coordinates)
     print("Newton Method with Armijo:  ", result)
     tracker.print_stats()
+    print()
 
     tracker = lib.Tracker()
     result = lib.newton_method_with_wolfe(config.f, config.START_POINT.copy(), config.TOLERANCE, config.MAX_ITERATIONS, tracker)
