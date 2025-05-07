@@ -152,8 +152,8 @@ MAX_ITERATIONS = 1000
 # Начальная точка для градиентного спуска
 # START_POINT = np.array([5., 5.]) # for fixed min is [2.999998518 2.000003579]
 # START_POINT = np.array([5., -5.]) # for fixed min is [3.584428654 -1.848129961]
-# START_POINT = np.array([-5., 5.]) # for fixed min is [-2.805118     3.131312]
-START_POINT = np.array([0., 0.]) # for fixed min is [-3.779310   -3.283186]
+START_POINT = np.array([-5., 5.]) # for fixed min is [-2.805118     3.131312]
+# START_POINT = np.array([0., 0.]) # for fixed min is [-3.779310   -3.283186]
 # Коэф с1
 C1 = 0.5
 # Коэф с2

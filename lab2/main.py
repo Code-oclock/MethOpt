@@ -3,6 +3,7 @@ import lib
 import config
 import numpy as np
 import my_scipy
+from opt_hyper import find_best_params
 
 np.set_printoptions(formatter={'float': '{:.9f}'.format}, suppress=True)
 
@@ -57,6 +58,8 @@ def our_scipy():
     tracker.print_stats()
     print()
 
+
 if __name__ == "__main__":
-    our_methods()
-    our_scipy()
+    # our_methods()
+    # our_scipy()
+    find_best_params()

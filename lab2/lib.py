@@ -315,9 +315,8 @@ def gradient_descent_dichotomy(
         if tracker is not None: tracker.track_point(point)
     return np.array(point)
 
-def newton_method(
+def newton_method_with_golden(
     f,
-    finding_step, 
     point: np.array, 
     tolerance: float, 
     max_iterations: int, 
@@ -348,45 +347,96 @@ def newton_method(
         # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
         def g(alpha): return f(point - alpha * d)
         # Поиск шага методом золотого сечения
-        step = finding_step(g, 0, 1, tolerance, max_iterations // 100)
+        step = golden_section_search(g, 0, 1, tolerance, max_iterations // 100)
         point -= step * d
         if tracker is not None: tracker.track_point(point)
         
     return point
 
-def newton_method_with_golden(
-    f,
-    point: np.array, 
-    tolerance: float, 
-    max_iterations: int, 
-    tracker: Tracker = None
-) -> np.array:
-    return newton_method(f, golden_section_search, point, tolerance, max_iterations, tracker)
 
 def newton_method_with_wolfe(
-    f,
+    f, 
     point: np.array, 
+    step: float, 
     tolerance: float, 
     max_iterations: int, 
+    c1: float, 
+    c2: float, 
+    tau: float, 
     tracker: Tracker = None
 ) -> np.array:
-    def backtracking_wolfe_search(
-            f, start: int, end: int, tolerance: float, max_iterations: int):
-        return backtracking_wolfe( f, point, 1, 0.5, 0.5, 0.8, max_iterations // 100, tracker)
-    return newton_method(f, backtracking_wolfe_search, point, tolerance, max_iterations, tracker)
+    if tracker is not None: 
+        tracker.track_point(point)
+        f = to_tracked_f(f, tracker)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point, tracker)
+        if np.linalg.norm(current_gradient) < tolerance:
+            break
+        current_hessian = hessian(f, point, tracker)
+
+        # исправляем кривизну
+        min_eigval = np.linalg.eigvals(current_hessian).min()
+        if min_eigval <= 0:
+            current_hessian += (abs(min_eigval) + tolerance) * np.eye(len(point))
+
+        # Вычисляем направление: d = H^(-1) * grad, если вычислить невозможно то переходим на шаг по градиенту
+        try:    
+            d = np.linalg.solve(current_hessian, current_gradient)
+        except np.linalg.LinAlgError:
+            d = current_gradient
+
+        # Выбор шага методом backtracking line search
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point - alpha * d)
+        # Поиск шага методом золотого сечения
+        step = backtracking_wolfe(f, point, step, c1, c2, tau, max_iterations // 100, tracker)
+        point -= step * d
+        if tracker is not None: tracker.track_point(point)
+        
+    return point
 
 
 def newton_method_with_armijo(
-    f,
+    f, 
     point: np.array, 
+    step: float, 
     tolerance: float, 
     max_iterations: int, 
+    c1: float, 
+    tau: float, 
     tracker: Tracker = None
 ) -> np.array:
-    def backtracking_armijo_search(
-            f, start: int, end: int, tolerance: float, max_iterations: int):
-        return backtracking_armijo(f, point, 0.3, np.random.uniform(0, 1), 0.8, tracker)
-    return newton_method(f, backtracking_armijo_search, point, tolerance, max_iterations, tracker)
+    if tracker is not None: 
+        tracker.track_point(point)
+        f = to_tracked_f(f, tracker)
+
+    for _ in range(max_iterations):
+        current_gradient = gradient(f, point, tracker)
+        if np.linalg.norm(current_gradient) < tolerance:
+            break
+        current_hessian = hessian(f, point, tracker)
+
+        # исправляем кривизну
+        min_eigval = np.linalg.eigvals(current_hessian).min()
+        if min_eigval <= 0:
+            current_hessian += (abs(min_eigval) + tolerance) * np.eye(len(point))
+
+        # Вычисляем направление: d = H^(-1) * grad, если вычислить невозможно то переходим на шаг по градиенту
+        try:    
+            d = np.linalg.solve(current_hessian, current_gradient)
+        except np.linalg.LinAlgError:
+            d = current_gradient
+
+        # Выбор шага методом backtracking line search
+        # g - функция одной переменной (сечение фукнции f плоскостью) - для подбора шага
+        def g(alpha): return f(point - alpha * d)
+        # Поиск шага методом золотого сечения
+        step = backtracking_armijo(f, point, step, c1, tau, tracker)
+        point -= step * d
+        if tracker is not None: tracker.track_point(point)
+        
+    return point
 
 
 def bfgs_section_search(
@@ -427,13 +477,13 @@ def bfgs_section_search(
         current_gradient = new_gradient
         # проверяем условие остановки
         if y @ s <= 0:
-            break 
+            continue 
         # y @ s = (grad_new - grad) @ (x_new - x)
         rho = 1.0 / (y @ s)
         # обновляем матрицу Гессе
         I = np.eye(dimension)
-        V = (I - rho * y @ s)
-        B = V @ B @ V + rho * s @ s
+        V = I - rho * np.outer(s, y)
+        B = V @ B @ V.T + rho * np.outer(s, s)
         if tracker is not None: tracker.track_point(point)
 
     return point
