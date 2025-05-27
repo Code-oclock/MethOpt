@@ -28,6 +28,10 @@ class Tracker:
         return self.__history["steps"]
     
     @property
+    def total_flops(self) -> list[float]:
+        return self.__total_flops
+    
+    @property
     def eras(self) -> int:
         return self.__eras
 
@@ -99,6 +103,7 @@ def sgd(
         X_shuffled = x[indices]
         Y_shuffled = y[indices]
 
+        flops = 0
         for i in range(0, len(x), batch_size):
             X_batch = X_shuffled[i:i + batch_size]
             Y_batch = Y_shuffled[i:i + batch_size]
@@ -110,21 +115,24 @@ def sgd(
 
             w -= step * gradient_average
 
+            flops += count_flops(batch_size, len(x[0]))
+
         step = step_update(era, decay_rate, step_initial)
         mse = mean_squared_error(y, np.dot(x, w))
-        tracker.track(mse, step)
+        tracker.track(mse, step, flops)
 
     return w
 
 
-def count_flops(self, batch_size: int, n_features: int) -> int:
+def count_flops(batch_size: int, n_features: int) -> int:
         """
         Считает число арифметических операций (умножения + сложения)
         для одного мини-батча в линейной регрессии:
         B - размер батча, D - число признаков
         Xb - батч признаков, yb - батч ответов, w - веса модели
         Xb - размера (B, D), yb - (B,), w - (D,)
-          1) Xb @ w      → B*D mult + B*(D-1) add
+          1) Число умножений: B*D + число сложений: B*(D-1)
+             Xb @ w      → B*D mult + B*(D-1) add
           2) preds - yb   → B sub
           3) Xb.T @ res  → D*B mult + D*(B-1) add
           4) scale grad  → D mult
@@ -179,107 +187,10 @@ def run_experiment(
 
     mse_test = mean_squared_error(y, x @ w)
 
-    # 6) Оценка FLOPs: примерно 2·D·N·E  
-    D = x.shape[1]
-    N = x.shape[0]
-    E = eras
-    flops_est = 2 * D * N * E
-
     return f"""
         'batch_size': {batch_size},
         'mse_test': {mse_test},
         'time_s': {duration},
         'peak_mem_mb': {peak / 1e6},
-        'flops_est': {flops_est}
+        'flops_est': {tracker.total_flops},
     """
-
-
-def sgd1(X, Y, ERAS, BATCH_SIZE, STEP_SIZE, EPS):
-    w = np.zeros(len(X[0]))
-    for era in range(ERAS):
-
-        # gradient = np.zeros_like(w)
-        indices = np.random.permutation(len(X))
-        X_shuffled = X[indices]
-        Y_shuffled = Y[indices]
-
-        for i in range(0, len(X), BATCH_SIZE):
-            X_batch = X_shuffled[i:i + BATCH_SIZE]
-            Y_batch = Y_shuffled[i:i + BATCH_SIZE]
-
-
-            # Y_i = Y_batch[i]
-            # X_i = X_batch[i]
-            # predictions = np.dot(X_i, w)
-            # errors = (predictions - Y_i) ** 2     #   (x_i * W - y_i) ** 2
-            # gradient = (2 / BATCH_SIZE) * (predictions - Y_i) * X_i   # 2 * (x_i * W - y_i) * x_i
-            # w -= STEP_SIZE * gradient
-
-
-            predictions = np.dot(X_batch, w)
-            # errors = (predictions - Y_batch) ** 2
-            gradient = (2 / BATCH_SIZE) * np.dot(X_batch.T, (predictions - Y_batch))  # 2 * (x_i * W - y_i) * x_i
-            w -= STEP_SIZE * gradient
-
-        # if np.linalg.norm(gradient) < EPS:
-        #     print(f"Early stopping at era {era}, gradient norm is too small.")
-        #     break
-
-        # mse = np.mean((X.dot(w) - Y) ** 2)
-        # if mse < EPS:
-        #     print(f"Early stopping by MSE at epoch {era}, MSE={mse:.2e}")
-        #     break
-    return w
-
-def test_sgd(w, X, Y):
-    print(f"Got: {np.dot(X, w)}, Expected: {Y}") 
-
-
-def manual_sgd(X, y,
-               lr=0.01,
-               batch_size=32,
-               n_epochs=100,
-               reg=None,       # {'type':'L2','alpha':0.1} и т.п.
-               schedule=None   # function(epoch, lr0) -> lr_epoch
-              ):
-    w = np.zeros(X.shape[1])
-    history = {'loss':[], 'lr':[]}
-
-    for epoch in range(n_epochs):
-        # 1) обновить lr (если есть расписание)
-        lr_epoch = schedule(epoch, lr) if schedule else lr
-
-        # 2) перемешать данные
-        idx = np.random.permutation(len(y))
-        X_shuf, y_shuf = X[idx], y[idx]
-
-        # 3) пройти по батчам
-        for start in range(0, len(y), batch_size):
-            Xb = X_shuf[start:start+batch_size]
-            yb = y_shuf[start:start+batch_size]
-
-            # 4) вычислить градиент MSE
-            preds = Xb.dot(w)
-            error = preds - yb
-            grad = (2 / len(yb)) * Xb.T.dot(error)
-
-            # 5) добавить регуляризацию, если нужна
-            if reg:
-                if reg['type']=='L2':
-                    grad += 2 * reg['alpha'] * w
-                elif reg['type']=='L1':
-                    grad += reg['alpha'] * np.sign(w)
-                elif reg['type']=='Elastic':
-                    α = reg['alpha']
-                    λ = reg['l1_ratio']
-                    grad += α * (λ * np.sign(w) + (1-λ)*2*w)
-
-            # 6) шаг
-            w -= lr_epoch * grad
-
-        # 7) записать MSE на всём датасете для графиков
-        loss = mean_squared_error(y, X.dot(w))
-        history['loss'].append(loss)
-        history['lr'].append(lr_epoch)
-
-    return w, history
