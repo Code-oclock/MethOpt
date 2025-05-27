@@ -10,7 +10,7 @@ def our_methods():
         tracker, x, y, config.ERAS, config.BATCH_SIZE, 
         config.STEP_NAME, config.STEP_SIZE, 
         config.DECAY_RATE, config.REG_TYPE, config.REG_LAMBDA, config.L1_RATIO, config.EPS)
-    draw.draw(tracker)
+    draw.draw(tracker, config.PICTURE_NAME)
 
 if __name__ == "__main__":
     our_methods()
