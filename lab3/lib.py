@@ -1,6 +1,31 @@
 import numpy as np
+from sklearn.metrics import mean_squared_error
 from ucimlrepo import fetch_ucirepo
 from sklearn.preprocessing import StandardScaler
+
+
+class Tracker:
+    def __init__(self) -> None:
+        self.__history = {'errors':[], 'steps':[]}
+        self.__eras = 0
+
+    def track(self, error: float, step: float) -> None:
+        self.__history['errors'].append(error)
+        self.__history['steps'].append(step)
+
+        self.__eras += 1
+
+    @property
+    def history_errors(self) -> list[float]:
+        return self.__history["errors"]
+    
+    @property
+    def history_steps(self) -> list[float]:
+        return self.__history["steps"]
+    
+    @property
+    def eras(self) -> int:
+        return self.__eras
 
 
 def step_schedule(name: str):
@@ -8,9 +33,9 @@ def step_schedule(name: str):
     case 'constant':
         s = lambda epoch, decay_rate, step: step
     case 'linear':
-        s = lambda epoch, decay_rate, step: step * (1 - decay_rate * epoch)
+        s = lambda epoch, decay_rate, step: step * (0.5 ** (epoch // 10))
     case 'exponential':
-        s = lambda epoch, decay_rate, step: step * (decay_rate ** epoch)
+        s = lambda epoch, decay_rate, step: step * np.exp(-decay_rate * epoch)
     case 'inverse_time':
         s = lambda epoch, decay_rate, step: step / (1 + decay_rate * epoch)
   return s
@@ -32,8 +57,39 @@ def load_dataset(id: int) -> tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-def sgd(x, y, eras, batch_size, step_name, step, decay_rate, EPS) -> np.ndarray:
-    w = np.zeros(len(x[0]))
+def regularization_gradient(
+        w: np.ndarray, 
+        reg_type: str, 
+        reg_lambda: float, 
+        l1_ratio: float) -> np.ndarray:
+    if reg_type == 'l2':
+        return 2 * reg_lambda * w
+    elif reg_type == 'l1':
+       return reg_lambda * np.sign(w)
+    elif reg_type == 'elastic':
+        return reg_lambda * ((1 - l1_ratio) * w + l1_ratio * np.sign(w))
+    else:
+        return 0
+
+
+def sgd(
+        tracker: Tracker, 
+        x: np.ndarray, 
+        y: np.ndarray, 
+        eras: int, 
+        batch_size: int, 
+        step_name: str, 
+        step_initial: float, 
+        decay_rate: float, 
+        reg_type: str,
+        reg_lambda: float,
+        l1_ratio: float,
+        eps: float) -> np.ndarray:
+    
+    w = np.random.rand(len(x[0]))
+    step_update = step_schedule(step_name)
+    step = step_initial
+
     for era in range(eras):
         indices = np.random.permutation(len(x))
         X_shuffled = x[indices]
@@ -44,8 +100,15 @@ def sgd(x, y, eras, batch_size, step_name, step, decay_rate, EPS) -> np.ndarray:
             Y_batch = Y_shuffled[i:i + batch_size]
 
             predictions = np.dot(X_batch, w)
-            gradient_avarage = (2 / batch_size) * np.dot(X_batch.T, (predictions - Y_batch))
-            w -= step_schedule(step_name)(era, decay_rate, step) * gradient_avarage
+            gradient_average = (2 / batch_size) * np.dot(X_batch.T, (predictions - Y_batch))
+
+            gradient_average += regularization_gradient(w, reg_type, reg_lambda, l1_ratio)
+
+            w -= step * gradient_average
+
+        step = step_update(era, decay_rate, step_initial)
+        mse = mean_squared_error(y, np.dot(x, w))
+        tracker.track(mse, step)
 
     return w
 

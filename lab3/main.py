@@ -1,15 +1,19 @@
 import config
+import draw
 import lib
 
 
 def our_methods():
+    tracker = lib.Tracker()
     x, y = lib.load_dataset(config.DATASET_ID)
-    w = lib.sgd(x, y, config.ERAS, config.BATCH_SIZE, config.STEP_NAME, config.STEP_SIZE, config.DECAY_RATE, config.EPS)
-    lib.test_sgd(w, x[401], y[401])
-    # print("Weights:", w)
+    w = lib.sgd(
+        tracker, x, y, config.ERAS, config.BATCH_SIZE, 
+        config.STEP_NAME, config.STEP_SIZE, 
+        config.DECAY_RATE, config.REG_TYPE, config.REG_LAMBDA, config.L1_RATIO, config.EPS)
+    draw.draw(tracker)
 
-
-our_methods()
+if __name__ == "__main__":
+    our_methods()
 
 
 # 3) Разбиваем (например, 70% train, 15% val, 15% test)
