@@ -1,6 +1,6 @@
 import numpy as np
 import optuna
-from config import f as test_function, START_POINT
+from config import RESULT_FOLDER, f as test_function, START_POINT
 from lib import *
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)
@@ -158,8 +158,24 @@ def objective_newton_method_with_wolfe(trial: optuna.trial.Trial) -> float:
     trial.set_user_attr("opt_point", point.tolist())
     return test_function(point)
 
+def objective_bfgs_section_search(trial: optuna.trial.Trial) -> float:
+    tolerance = trial.suggest_float("tol_bfgs", 1e-6, 1e-2)
+    max_iter = trial.suggest_int("max_iter_bfgs", 100, 5000)
+    point = bfgs_section_search(
+        test_function,
+        START_POINT.copy(),
+        tolerance,
+        max_iter
+    )
+    trial.set_user_attr("opt_point", point.tolist())
+    return test_function(point)
+
 
 def find_best_params():
+    print("=== OPTUNA HYPERPARAMETER TUNING ===")
+    print("Test function:", RESULT_FOLDER.split("_")[0])
+    print("Start point:", START_POINT)
+    
     methods = {
         "fixed": objective_fixed,
         "decreasing": objective_decreasing,
@@ -169,7 +185,8 @@ def find_best_params():
         "dichotomy": objective_dichotomy,
         "newton_golden": objective_newton_method_with_golden,
         "newton_armijo": objective_newton_method_with_armijo,
-        "newton_wolfe": objective_newton_method_with_wolfe
+        "newton_wolfe": objective_newton_method_with_wolfe,
+        "bfgs_section_search": objective_bfgs_section_search,
     }
 
     for name, objective in methods.items():

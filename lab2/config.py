@@ -90,28 +90,28 @@ import autograd.numpy as np
 
 # RESULT_FOLDER = "matyas_bad/"
 
-# def f(point):
-#     x, y = point
-#     return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
+def f(point):
+    x, y = point
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
 
-# TOLERANCE = 1e-4
-# # базовый щаг поиска
-# STEP_FIXED = 0.001
-# STEP_DECREASING = 0.01
-# STEP_ARMIJO = 0.3
-# STEP_WOLFE = 0.3
-# # Количество итераций
-# MAX_ITERATIONS = 10000
-# # Начальная точка для градиентного спуска
-# START_POINT = np.array([5., 5.])
-# # Коэф с1
-# C1 = 0.5
-# # Коэф с2
-# C2 = 0.5
-# # Тау
-# TAU = 0.8
+TOLERANCE = 1e-4
+# базовый щаг поиска
+STEP_FIXED = 0.001
+STEP_DECREASING = 0.01
+STEP_ARMIJO = 0.3
+STEP_WOLFE = 0.3
+# Количество итераций
+MAX_ITERATIONS = 10000
+# Начальная точка для градиентного спуска
+START_POINT = np.array([5., 5.])
+# Коэф с1
+C1 = 0.5
+# Коэф с2
+C2 = 0.5
+# Тау
+TAU = 0.8
 
-# RESULT_FOLDER = "himmelblau_good/"
+RESULT_FOLDER = "himmelblau_good/"
 
 # def f(point):
 #     x, y = point
@@ -137,29 +137,29 @@ import autograd.numpy as np
 
 # RESULT_FOLDER = "matyas_with_noise/"
 
-def f(point):
-    x, y = point
-    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2 # + np.random.normal(loc=0, scale=NOISE)
+# def f(point):
+#     x, y = point
+#     return (x**2 + y - 11)**2 + (x + y**2 - 7)**2 # + np.random.normal(loc=0, scale=NOISE)
 
-TOLERANCE = 1e-4
-# базовый щаг поиска
-STEP_FIXED = 0.01
-STEP_DECREASING = 0.01
-STEP_ARMIJO = 0.3
-STEP_WOLFE = 0.03
-# Количество итераций
-MAX_ITERATIONS = 1000
-# Начальная точка для градиентного спуска
-# START_POINT = np.array([5., 5.]) # for fixed min is [2.999998518 2.000003579]
-# START_POINT = np.array([5., -5.]) # for fixed min is [3.584428654 -1.848129961]
-START_POINT = np.array([-5., 5.]) # for fixed min is [-2.805118     3.131312]
-# START_POINT = np.array([0., 0.]) # for fixed min is [-3.779310   -3.283186]
-# Коэф с1
-C1 = 0.5
-# Коэф с2
-C2 = 0.5
-# Тау
-TAU = 0.8
-NOISE = 10
+# TOLERANCE = 1e-4
+# # базовый щаг поиска
+# STEP_FIXED = 0.01
+# STEP_DECREASING = 0.01
+# STEP_ARMIJO = 0.3
+# STEP_WOLFE = 0.03
+# # Количество итераций
+# MAX_ITERATIONS = 1000
+# # Начальная точка для градиентного спуска
+# # START_POINT = np.array([5., 5.]) # for fixed min is [2.999998518 2.000003579]
+# # START_POINT = np.array([5., -5.]) # for fixed min is [3.584428654 -1.848129961]
+# START_POINT = np.array([-5., 5.]) # for fixed min is [-2.805118     3.131312]
+# # START_POINT = np.array([0., 0.]) # for fixed min is [-3.779310   -3.283186]
+# # Коэф с1
+# C1 = 0.5
+# # Коэф с2
+# C2 = 0.5
+# # Тау
+# TAU = 0.8
+# NOISE = 10
 
-RESULT_FOLDER = "himmelblau_good_with_noise/"
+# RESULT_FOLDER = "himmelblau_good_with_noise/"
