@@ -131,6 +131,8 @@ def train_adagrad(loader, in_features, lr, lr_decay, weight_decay, init_accumula
             optimizer.step()
             running_loss += loss.item() * xb.size(0)
             epoch_loss = running_loss/len(loader.dataset)
+
+        epoch_loss = running_loss/len(loader.dataset)
         tracker.track(epoch_loss, 0)
         print(f"[AdaGrad]   Epoch {epoch:2d}/{n_epochs}, Loss = {epoch_loss:.4f}")
 
