@@ -117,6 +117,31 @@ def sgd(
     return w
 
 
+def count_flops(self, batch_size: int, n_features: int) -> int:
+        """
+        Считает число арифметических операций (умножения + сложения)
+        для одного мини-батча в линейной регрессии:
+        B - размер батча, D - число признаков
+        Xb - батч признаков, yb - батч ответов, w - веса модели
+        Xb - размера (B, D), yb - (B,), w - (D,)
+          1) Xb @ w      → B*D mult + B*(D-1) add
+          2) preds - yb   → B sub
+          3) Xb.T @ res  → D*B mult + D*(B-1) add
+          4) scale grad  → D mult
+          5) lr * grad   → D mult
+          6) w -= grad   → D sub
+        """
+        B, D = batch_size, n_features
+        mults = B*D           \
+              + D*B           \
+              + D             \
+              + D
+        adds  = B*(D-1)       \
+              + D*(B-1)
+        subs  = B             \
+              + D
+        return mults + adds + subs
+
 def run_experiment(
         tracker: Tracker, 
         x: np.ndarray, 
