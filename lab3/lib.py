@@ -1,3 +1,5 @@
+import time
+import tracemalloc
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from ucimlrepo import fetch_ucirepo
@@ -7,12 +9,14 @@ from sklearn.preprocessing import StandardScaler
 class Tracker:
     def __init__(self) -> None:
         self.__history = {'errors':[], 'steps':[]}
+        self.__total_flops = 0
         self.__eras = 0
 
-    def track(self, error: float, step: float) -> None:
+    def track(self, error: float, step: float, flops_epoch: int) -> None:
         self.__history['errors'].append(error)
         self.__history['steps'].append(step)
 
+        self.__total_flops += flops_epoch
         self.__eras += 1
 
     @property
@@ -112,6 +116,57 @@ def sgd(
 
     return w
 
+
+def run_experiment(
+        tracker: Tracker, 
+        x: np.ndarray, 
+        y: np.ndarray, 
+        eras: int, 
+        batch_size: int, 
+        step_name: str, 
+        step_initial: float, 
+        decay_rate: float, 
+        reg_type: str,
+        reg_lambda: float,
+        l1_ratio: float,
+        eps: float):
+
+    tracemalloc.start()
+    t0 = time.perf_counter()
+
+    w = sgd(
+        tracker=tracker,
+        x=x, y=y,
+        eras=eras,
+        batch_size=batch_size,
+        step_name=step_name,
+        step_initial=step_initial,
+        decay_rate=decay_rate,
+        eps=eps,
+        reg_type=reg_type,
+        reg_lambda=reg_lambda,
+        l1_ratio=l1_ratio
+    )
+
+    duration = time.perf_counter() - t0
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    mse_test = mean_squared_error(y, x @ w)
+
+    # 6) Оценка FLOPs: примерно 2·D·N·E  
+    D = x.shape[1]
+    N = x.shape[0]
+    E = eras
+    flops_est = 2 * D * N * E
+
+    return f"""
+        'batch_size': {batch_size},
+        'mse_test': {mse_test},
+        'time_s': {duration},
+        'peak_mem_mb': {peak / 1e6},
+        'flops_est': {flops_est}
+    """
 
 
 def sgd1(X, Y, ERAS, BATCH_SIZE, STEP_SIZE, EPS):
