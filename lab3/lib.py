@@ -5,12 +5,17 @@ from sklearn.metrics import mean_squared_error
 from ucimlrepo import fetch_ucirepo
 from sklearn.preprocessing import StandardScaler
 
+import ssl
+import os
+ssl._create_default_https_context = ssl._create_unverified_context
+os.environ['CURL_CA_BUNDLE'] = ''
 
 class Tracker:
-    def __init__(self) -> None:
+    def __init__(self, name="") -> None:
         self.__history = {'errors':[], 'steps':[]}
         self.__total_flops = 0
         self.__eras = 0
+        self.__name = name
 
     def track(self, error: float, step: float, flops_epoch: int) -> None:
         self.__history['errors'].append(error)
@@ -18,6 +23,10 @@ class Tracker:
 
         self.__total_flops += flops_epoch
         self.__eras += 1
+
+    @property
+    def name(self) -> str:
+        return self.__name    
 
     @property
     def history_errors(self) -> list[float]:
