@@ -74,6 +74,31 @@ def load_dataset(id: int) -> tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
+def make_anisotropic_regression(
+    n_samples: int = 1000,
+    noise: float = 5.0,
+    random_state: int = 42
+):
+    """
+    Генерирует X ~ N(0, diag([1, 100])), w_true = [3, -1], y = Xw + noise.
+    Это даст сильно «растянутую» по одной оси поверхность потерь.
+    """
+    rng = np.random.default_rng(random_state)
+    # Две фичи с разными дисперсиями
+    cov = np.diag([1.0, 100.0])
+    X = rng.multivariate_normal(mean=[0,0], cov=cov, size=n_samples)
+    
+    # Истинные веса
+    w_true = np.array([3.0, -1.0])
+    y = X @ w_true + noise * rng.standard_normal(n_samples)
+    
+    # Добавим столбец единиц для bias и стандартизируем признаки
+    X = StandardScaler().fit_transform(X)
+    X = np.c_[np.ones((n_samples,1)), X]
+    
+    return X, y
+
+
 def regularization_gradient(
         w: np.ndarray, 
         reg_type: str, 
@@ -87,6 +112,88 @@ def regularization_gradient(
         return reg_lambda * ((1 - l1_ratio) * w + l1_ratio * np.sign(w))
     else:
         return 0
+
+
+def sgd_nesterov(
+        tracker: Tracker,
+        x: np.ndarray,
+        y: np.ndarray,
+        eras: int,
+        batch_size: int,
+        step_name: str,
+        step_initial: float,
+        decay_rate: float,
+        beta: float,
+) -> np.ndarray:
+    w = np.random.rand(len(x[0]))
+    v = np.zeros_like(w)
+    step_update = step_schedule(step_name)
+    step = step_initial
+
+    for era in range(eras):
+        indices = np.random.permutation(len(x))
+        X_shuffled = x[indices]
+        Y_shuffled = y[indices]
+
+        flops = 0
+        for i in range(0, len(x), batch_size):
+            X_batch = X_shuffled[i:i + batch_size]
+            Y_batch = Y_shuffled[i:i + batch_size]
+
+            predictions = np.dot(X_batch, w - beta * v)
+            gradient_average = (2 / batch_size) * np.dot(X_batch.T, (predictions - Y_batch))
+
+            v = beta * v - step * gradient_average
+            w += v
+
+            flops += count_flops(batch_size, len(x[0]))
+
+        step = step_update(era, decay_rate, step_initial)
+        mse = mean_squared_error(y, np.dot(x, w))
+        tracker.track(mse, step, flops)
+
+    return w    
+
+def sgd_momentum(
+        tracker: Tracker,
+        x: np.ndarray,
+        y: np.ndarray,
+        eras: int,
+        batch_size: int,
+        step_name: str,
+        step_initial: float,
+        decay_rate: float,
+        beta: float,
+) -> np.ndarray:
+    w = np.random.rand(len(x[0]))
+    v = np.zeros_like(w)
+    step_update = step_schedule(step_name)
+    step = step_initial
+
+    for era in range(eras):
+        indices = np.random.permutation(len(x))
+        X_shuffled = x[indices]
+        Y_shuffled = y[indices]
+
+        flops = 0
+        for i in range(0, len(x), batch_size):
+            X_batch = X_shuffled[i:i + batch_size]
+            Y_batch = Y_shuffled[i:i + batch_size]
+
+            predictions = np.dot(X_batch, w)
+            gradient_average = (2 / batch_size) * np.dot(X_batch.T, (predictions - Y_batch))
+
+            v = beta * v + gradient_average
+            w -= step * v
+
+            flops += count_flops(batch_size, len(x[0]))
+
+        step = step_update(era, decay_rate, step_initial)
+        mse = mean_squared_error(y, np.dot(x, w))
+        tracker.track(mse, step, flops)
+
+    return w
+
 
 
 def sgd(
