@@ -8,7 +8,6 @@ from torch import nn, optim
 from torch.utils.data import TensorDataset, DataLoader
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-
 ERAS     = 20
 FIXED_LR = 0.01
 BATCH    = 32
