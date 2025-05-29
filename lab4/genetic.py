@@ -3,7 +3,7 @@ import numpy as np
 # Реализация вещественно-кодированного генетического алгоритма с рулеточным отбором
 # для функции f(x,y)=x^2+y^2
 
-def fitness_from_loss(loss, eps=1e-8):
+def fitness_from_loss(loss, eps=1e-4):
     """
     Преобразует значение loss в fitness: обратно пропорционально loss.
     Добавляем eps, чтобы избежать деления на ноль.
@@ -48,15 +48,19 @@ def arithmetic_crossover(parent1, parent2):
 
 def gaussian_mutation(individual, gene_mut_prob=0.1, sigma=0.1, bounds=None):
     """
-    Мутация: с вероятностью gene_mut_prob добавляет гауссов шум.
-    При опции bounds ограничивает значения.
+    Простая векторизованная мутация:
+    - Для каждого гена с вероятностью gene_mut_prob добавляем гауссов шум.
+    - Если заданы bounds, ограничиваем мутант в пределах.
     """
-    mutant = individual.copy()
-    for j in range(len(mutant)):
-        if np.random.rand() < gene_mut_prob:
-            mutant[j] += np.random.normal(scale=sigma)
-            if bounds is not None:
-                mutant[j] = np.clip(mutant[j], bounds[j][0], bounds[j][1])
+    # Генерируем шум и маску мутации для всех генов сразу
+    noise = np.random.normal(scale=sigma, size=individual.shape)
+    mask = np.random.rand(*individual.shape) < gene_mut_prob
+    mutant = individual + noise * mask
+    # Применяем границы, если нужно
+    if bounds is not None:
+        lower = np.array([b[0] for b in bounds])
+        upper = np.array([b[1] for b in bounds])
+        mutant = np.clip(mutant, lower, upper)
     return mutant
 
 
@@ -127,21 +131,136 @@ def genetic_algorithm(
     }
 
 
+# if __name__ == "__main__":
+#     f = lambda v: v[0]**2 + v[1]**2
+#     bounds = [(-5,5), (-5,5)]
+
+#     result = genetic_algorithm(
+#         func=f,
+#         bounds=bounds,
+#         pop_size=20,
+#         generations=100,
+#         crossover_prob=0.8,
+#         mutation_prob=0.1,
+#         mutation_sigma=0.1,
+#         elitism_size=2
+#     )
+
+#     print(f"Лучшее поколение: {result['best_generation']}")
+#     print(f"Лучшее решение: x={result['best_individual'][0]:.4f}, y={result['best_individual'][1]:.4f}")
+#     print(f"Значение функции: {result['best_loss']:.4f}")
+
+
+
+import numpy as np
+import optuna
+from genetic import genetic_algorithm
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+# ----------------------------------------
+# 1. Определяем тестовые функции
+# ----------------------------------------
+
+def rosenbrock(v):
+    x, y = v[0], v[1]
+    # Стандартная форма: f(x,y) = (a - x)^2 + b*(y - x^2)^2, a=1, b=100
+    return (1 - x)**2 + 100 * (y - x**2)**2
+
+def rastrigin(v):
+    x, y = v[0], v[1]
+    # f(x,y) = 10*2 + x^2 - 10*cos(2*pi*x) + y^2 - 10*cos(2*pi*y)
+    return 20 + x**2 - 10*np.cos(2*np.pi*x) + y**2 - 10*np.cos(2*np.pi*y)
+
+# ----------------------------------------
+# 2. Генерация синтетического регрессионного датасета
+# ----------------------------------------
+
+def generate_regression_loss(n_samples=200, noise_sigma=0.5, seed=42):
+    """
+    Генерирует X и y для простой линейной регрессии с двумя признаками:
+    y = theta0 + theta1*x1 + theta2*x2 + шум
+    Возвращает функцию потерь MSE в виде reg_loss(v), где
+    v = [theta0, theta1, theta2].
+    """
+    np.random.seed(seed)
+    X = np.random.uniform(-5, 5, size=(n_samples, 2))
+    theta_true = np.array([1.5, -2.0, 0.5])
+    y = theta_true[0] + X.dot(theta_true[1:]) + np.random.normal(scale=noise_sigma, size=n_samples)
+
+    def reg_loss(v):
+        pred = v[0] + X.dot(v[1:])
+        return np.mean((y - pred)**2)
+
+    return reg_loss
+
+
+# ----------------------------------------
+# 3. Функции-объективы для Optuna
+# ----------------------------------------
+
+def make_objective(func, bounds):
+    """
+    Возвращает функцию objective(trial), минимизирующую func
+    с помощью genetic_algorithm и Optuna.
+    """
+    def objective(trial):
+        # Предлагаем гиперпараметры
+        pop_size = trial.suggest_int('pop_size', 10, 100)
+        generations = trial.suggest_int('generations', 50, 500)
+        crossover_prob = trial.suggest_float('crossover_prob', 0.5, 1.0)
+        mutation_prob = trial.suggest_float('mutation_prob', 0.0, 0.5)
+        mutation_sigma = trial.suggest_float('mutation_sigma', 0.01, 2.0, log=True)
+        elitism_size = trial.suggest_int('elitism_size', 1, max(1, pop_size // 5))
+
+        result = genetic_algorithm(
+            func=func,
+            bounds=bounds,
+            pop_size=pop_size,
+            generations=generations,
+            crossover_prob=crossover_prob,
+            mutation_prob=mutation_prob,
+            mutation_sigma=mutation_sigma,
+            elitism_size=elitism_size
+        )
+        return result['best_loss']
+
+    return objective
+
+
+# show_progress_bar=True
+# ----------------------------------------
+# 4. Основной блок: оптимизация гиперпараметров
+# ----------------------------------------
 if __name__ == "__main__":
-    f = lambda v: v[0]**2 + v[1]**2
-    bounds = [(-5,5), (-5,5)]
+    n_trials = 50
 
-    result = genetic_algorithm(
-        func=f,
-        bounds=bounds,
-        pop_size=20,
-        generations=100,
-        crossover_prob=0.8,
-        mutation_prob=0.1,
-        mutation_sigma=0.1,
-        elitism_size=2
+    # 4.1 Подбираем гиперпараметры для Розенброка
+    study_ros = optuna.create_study(direction='minimize')
+    study_ros.optimize(
+        make_objective(rosenbrock, bounds=[(-5,5), (-5,5)]),
+        n_trials=n_trials,
+        show_progress_bar=True
     )
+    print("Лучшие параметры для Rosenbrock:", study_ros.best_params)
+    print("Лучший loss:", study_ros.best_value)
 
-    print(f"Лучшее поколение: {result['best_generation']}")
-    print(f"Лучшее решение: x={result['best_individual'][0]:.4f}, y={result['best_individual'][1]:.4f}")
-    print(f"Значение функции: {result['best_loss']:.4f}")
+    # 4.2 Для Rastrigin
+    study_ras = optuna.create_study(direction='minimize')
+    study_ras.optimize(
+        make_objective(rastrigin, bounds=[(-5,5), (-5,5)]),
+        n_trials=n_trials,
+        show_progress_bar=True
+    )
+    print("Лучшие параметры для Rastrigin:", study_ras.best_params)
+    print("Лучший loss:", study_ras.best_value)
+
+    # 4.3 Для синтетической линейной регрессии
+    reg_loss = generate_regression_loss(n_samples=200, noise_sigma=0.5)
+    study_reg = optuna.create_study(direction='minimize')
+    study_reg.optimize(
+        make_objective(reg_loss, bounds=[(-10,10)] * 3),
+        n_trials=n_trials,
+        show_progress_bar=True
+    )
+    print("Лучшие параметры для регрессии:", study_reg.best_params)
+    print("Лучший MSE:", study_reg.best_value)
