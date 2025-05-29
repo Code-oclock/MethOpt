@@ -1,85 +1,112 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import imageio
-import os
 
-# Параметры
-n_iter = 200
-T0 = 25.0
-T_end = 0.1
-alpha = (T_end / T0)**(1/(n_iter - 1))
-lr = 0.1          # шаг градиентного спуска
-eps = 1e-3        # для численного градиента
+class Tracker:
+    def __init__(self, name="") -> None:
+        self.__history = {'errors':[], 'steps':[]}
+        self.__total_flops = 0
+        self.__eras = 0
+        self.__name = name
 
-# Комплексная функция с множеством локальных минимумов
-def f(x):
-    return np.sin(5*x) + np.sin(2*x) + 0.1 * x**2
+    def track(self, error: float, step: float, flops_epoch: int) -> None:
+        self.__history['errors'].append(error)
+        self.__history['steps'].append(step)
 
-# Численный градиент
-def grad(x):
-    return (f(x + eps) - f(x - eps)) / (2 * eps)
+        self.__total_flops += flops_epoch
+        self.__eras += 1
 
-# Общая инициация
-x0 = np.random.uniform(-5, 5)
+    @property
+    def name(self) -> str:
+        return self.__name    
 
-# Истории для SA и GD
-xs_sa = []
-Ts_sa = []
-xs_gd = []
-
-# Начальные состояния
-x_sa, x_gd = x0, x0
-f_sa = f(x_sa)
-
-# Запуск алгоритмов
-for i in range(n_iter):
-    # SA
-    T = T0 * (alpha**i)
-    Ts_sa.append(T)
-    xs_sa.append(x_sa)
+    @property
+    def history_errors(self) -> list[float]:
+        return self.__history["errors"]
     
-    x_new = x_sa + np.random.normal(scale=1.0)
-    if f(x_new) < f_sa or np.random.rand() < np.exp(-(f(x_new) - f_sa) / T):
-        x_sa = x_new
-        f_sa = f(x_sa)
-    
-    # GD
-    grad_val = (f(x_gd + eps) - f(x_gd - eps)) / (2 * eps)
-    x_gd = x_gd - lr * grad_val
-    xs_gd.append(x_gd)
+    @property
+    def history_steps(self) -> list[float]:
+        return self.__history["steps"]
+    @property
+    def total_flops(self) -> list[float]:
+        return self.__total_flops
+    @property
+    def eras(self) -> int:
+        return self.__eras
 
-# Подготовка кадров
-out_dir = '/mnt/data/sa_vs_gd_frames'
-os.makedirs(out_dir, exist_ok=True)
-filenames = []
 
-# Предвычисление графика функции
-x_vals = np.linspace(-5, 5, 2000)
-y_vals = f(x_vals)
-y_min, y_max = y_vals.min(), y_vals.max()
+def rosenbrock(x):
+    return np.sum(100*(x[1:] - x[:-1]**2)**2 + (1 - x[:-1])**2)
 
-for i in range(n_iter):
-    fig, ax = plt.subplots(figsize=(6, 3), dpi=80)
-    ax.plot(x_vals, y_vals, linewidth=1, color='gray')
-    ax.axvline(xs_sa[i], color='red', linewidth=2, label='SA')
-    ax.scatter(xs_gd[i], f(xs_gd[i]), color='blue', s=30, label='GD')
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(y_min, y_max)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(f'Temperature: {Ts_sa[i]:.2f}   Iter: {i}', loc='left', fontsize=10)
-    if i == 0:
-        ax.legend(loc='upper right', fontsize=8)
-    plt.tight_layout(pad=0)
-    
-    frame_path = os.path.join(out_dir, f'frame_{i:03d}.png')
-    fig.savefig(frame_path)
-    plt.close(fig)
-    filenames.append(frame_path)
+def rastrigin(x):
+    A = 10
+    return A * x.size + np.sum(x**2 - A * np.cos(2 * np.pi * x))
 
-# Сборка GIF
-frames = [imageio.v2.imread(fn) for fn in filenames]
-gif_path = '/mnt/data/compare_sa_gd.gif'
-imageio.mimsave(gif_path, frames, duration=0.05)
 
-print("GIF saved to", gif_path)
+def temperature_schedule(name: str):
+    if name == 'linear':
+        return lambda t: 1.0 - 0.001 * t
+    elif name == 'exponential':
+        return lambda t: 0.99 ** t
+    elif name == 'logarithmic':
+        return lambda t: 1.0 / np.log(t + 1)
+    elif name == 'constant_step':
+        return lambda t: 0.5 ** (t // 100)
+    else:
+        raise ValueError("Unknown temperature schedule type.")
+
+def simulated_annealing(obj_func, x0, T0, t_sheduling, n_iter, bounds, step_size):
+    x = x0.copy()
+    f_x = obj_func(x)
+    best_x, best_f = x.copy(), f_x
+    T = T0
+    history = []
+
+    for i in range(n_iter):
+        x_new = x + np.random.normal(scale=step_size, size=x.shape)
+        if bounds is not None:
+            x_new = np.clip(x_new, bounds[:,0], bounds[:,1])
+        f_new = obj_func(x_new)
+        delta = f_new - f_x
+
+        if (delta < 0) or (np.random.rand() < np.exp(-delta / T)):
+            x, f_x = x_new, f_new
+            if f_x < best_f:
+                best_x, best_f = x.copy(), f_x
+
+        T = t_sheduling(T)
+        history.append(best_f)
+
+    return best_x, best_f, history
+
+# def genetic_algorithm(obj_func, bounds, pop_size=50, n_gen=100, cross_rate=0.8, mut_rate=0.1):
+#     dim = bounds.shape[0]
+#     pop = np.random.uniform(bounds[:,0], bounds[:,1], size=(pop_size, dim))
+#     fitness = np.apply_along_axis(obj_func, 1, pop)
+#     best_idx = np.argmin(fitness)
+#     best, best_f = pop[best_idx], fitness[best_idx]
+#     history = []
+#     for _ in range(n_gen):
+#         idxs = np.random.randint(0, pop_size, size=(pop_size, 2))
+#         parents = np.where(fitness[idxs[:,0]] < fitness[idxs[:,1]], idxs[:,0], idxs[:,1])
+#         new_pop = []
+#         for i in range(0, pop_size, 2):
+#             p1, p2 = pop[parents[i]], pop[parents[i+1]]
+#             if np.random.rand() < cross_rate:
+#                 cx = np.random.randint(1, dim)
+#                 c1 = np.concatenate([p1[:cx], p2[cx:]])
+#                 c2 = np.concatenate([p2[:cx], p1[cx:]])
+#             else:
+#                 c1, c2 = p1.copy(), p2.copy()
+#             # Мутация
+#             for c in [c1, c2]:
+#                 for d in range(dim):
+#                     if np.random.rand() < mut_rate:
+#                         c[d] = np.random.uniform(bounds[d,0], bounds[d,1])
+#             new_pop += [c1, c2]
+#         pop = np.array(new_pop)
+#         fitness = np.apply_along_axis(obj_func, 1, pop)
+#         idx = np.argmin(fitness)
+#         if fitness[idx] < best_f:
+#             best, best_f = pop[idx], fitness[idx]
+#         history.append(best_f)
+
+#     return best, best_f, history
