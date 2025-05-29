@@ -76,37 +76,3 @@ def simulated_annealing(obj_func, x0, T0, t_sheduling, n_iter, bounds, step_size
         history.append(best_f)
 
     return best_x, best_f, history
-
-# def genetic_algorithm(obj_func, bounds, pop_size=50, n_gen=100, cross_rate=0.8, mut_rate=0.1):
-#     dim = bounds.shape[0]
-#     pop = np.random.uniform(bounds[:,0], bounds[:,1], size=(pop_size, dim))
-#     fitness = np.apply_along_axis(obj_func, 1, pop)
-#     best_idx = np.argmin(fitness)
-#     best, best_f = pop[best_idx], fitness[best_idx]
-#     history = []
-#     for _ in range(n_gen):
-#         idxs = np.random.randint(0, pop_size, size=(pop_size, 2))
-#         parents = np.where(fitness[idxs[:,0]] < fitness[idxs[:,1]], idxs[:,0], idxs[:,1])
-#         new_pop = []
-#         for i in range(0, pop_size, 2):
-#             p1, p2 = pop[parents[i]], pop[parents[i+1]]
-#             if np.random.rand() < cross_rate:
-#                 cx = np.random.randint(1, dim)
-#                 c1 = np.concatenate([p1[:cx], p2[cx:]])
-#                 c2 = np.concatenate([p2[:cx], p1[cx:]])
-#             else:
-#                 c1, c2 = p1.copy(), p2.copy()
-#             # Мутация
-#             for c in [c1, c2]:
-#                 for d in range(dim):
-#                     if np.random.rand() < mut_rate:
-#                         c[d] = np.random.uniform(bounds[d,0], bounds[d,1])
-#             new_pop += [c1, c2]
-#         pop = np.array(new_pop)
-#         fitness = np.apply_along_axis(obj_func, 1, pop)
-#         idx = np.argmin(fitness)
-#         if fitness[idx] < best_f:
-#             best, best_f = pop[idx], fitness[idx]
-#         history.append(best_f)
-
-#     return best, best_f, history

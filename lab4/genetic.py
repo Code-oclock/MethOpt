@@ -1,9 +1,16 @@
+import os
+import imageio
+from matplotlib import pyplot as plt
 import numpy as np
+import numpy as np
+import optuna
+from genetic import genetic_algorithm
+optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 # Реализация вещественно-кодированного генетического алгоритма с рулеточным отбором
 # для функции f(x,y)=x^2+y^2
 
-def fitness_from_loss(loss, eps=1e-4):
+def fitness_from_loss(loss, eps=(1 - 0.5 ** 50) / (1 - 0.5) + 1):
     """
     Преобразует значение loss в fitness: обратно пропорционально loss.
     Добавляем eps, чтобы избежать деления на ноль.
@@ -93,7 +100,9 @@ def genetic_algorithm(
     ])
 
     best_history = []
+    history = []
     for gen in range(generations):
+        history.append(pop.copy())
         losses, fitnesses = evaluate_population(pop, func)
         # Сохраняем лучший
         best_idx = np.argmin(losses)
@@ -127,35 +136,10 @@ def genetic_algorithm(
         'best_generation': best_gen,
         'best_individual': best_ind,
         'best_loss': best_loss,
-        'history': best_history
+        'best_history': best_history,
+        'history': history
     }
 
-
-# if __name__ == "__main__":
-#     f = lambda v: v[0]**2 + v[1]**2
-#     bounds = [(-5,5), (-5,5)]
-
-#     result = genetic_algorithm(
-#         func=f,
-#         bounds=bounds,
-#         pop_size=20,
-#         generations=100,
-#         crossover_prob=0.8,
-#         mutation_prob=0.1,
-#         mutation_sigma=0.1,
-#         elitism_size=2
-#     )
-
-#     print(f"Лучшее поколение: {result['best_generation']}")
-#     print(f"Лучшее решение: x={result['best_individual'][0]:.4f}, y={result['best_individual'][1]:.4f}")
-#     print(f"Значение функции: {result['best_loss']:.4f}")
-
-
-
-import numpy as np
-import optuna
-from genetic import genetic_algorithm
-optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 # ----------------------------------------
 # 1. Определяем тестовые функции
@@ -264,3 +248,62 @@ if __name__ == "__main__":
     )
     print("Лучшие параметры для регрессии:", study_reg.best_params)
     print("Лучший MSE:", study_reg.best_value)
+
+
+
+    # -------------------------------------------------
+
+    # --- Функция Растригина (интересная многоминимальная) ---
+    # def weierstrass_1d(ind, a=0.5, b=3, N=50):
+    #     """
+    #     Одномерная функция Вейерштрасса:
+    #     W(x) = sum_{n=0..N-1} a^n * cos(b^n * π * x)
+    #     """
+    #     x = ind[0]
+    #     return sum(a**n * np.cos((b**n) * np.pi * x) for n in range(N))
+
+    # # Параметры и запуск ГА
+    # bounds = [(-2, 3.5)]  # поэкспериментируйте с диапазоном, где видна фрактальность
+    # hist = genetic_algorithm(
+    #     func=weierstrass_1d,
+    #     bounds=bounds,
+    #     pop_size=50,
+    #     generations=100,
+    #     crossover_prob=0.8,
+    #     mutation_prob=0.1,
+    #     mutation_sigma=0.1,
+    #     elitism_size=2
+    # )['history']
+
+    # # --- Визуализация ---
+    # # Значения функции для построения кривой
+    # x_vals = np.linspace(bounds[0][0], bounds[0][1], 1000)
+    # y_vals = np.array([[weierstrass_1d(np.array([x]))] for x in x_vals]).flatten()
+
+    # out_dir = './ga1d_frames'
+    # os.makedirs(out_dir, exist_ok=True)
+    # filenames = []
+
+    # for gen, pop in enumerate(hist):
+    #     fig, ax = plt.subplots(figsize=(6, 3), dpi=80)
+    #     # фоновая кривая Вейерштрасса
+    #     ax.plot(x_vals, y_vals)
+    #     # текущие особи
+    #     ax.scatter(pop[:, 0], [weierstrass_1d(ind) for ind in pop], s=20, color='red')
+    #     ax.set_xlim(bounds[0][0], bounds[0][1])
+    #     ax.set_ylim(y_vals.min(), y_vals.max())
+    #     ax.set_xticks([])
+    #     ax.set_yticks([])
+    #     ax.set_title(f'Поколение {gen+1}', loc='left', fontsize=10)
+    #     plt.tight_layout(pad=0)
+    #     path = os.path.join(out_dir, f'frame_{gen:03d}.png')
+    #     fig.savefig(path)
+    #     plt.close(fig)
+    #     filenames.append(path)
+
+    # # Собираем GIF
+    # frames = [imageio.v2.imread(fn) for fn in filenames]
+    # gif_path = './ga1d_weierstrass_evolution.gif'
+    # imageio.mimsave(gif_path, frames, duration=0.1)
+
+    # print("GIF сохранён:", gif_path)
